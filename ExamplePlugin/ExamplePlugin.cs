@@ -41,6 +41,7 @@ namespace ExamplePlugin
         public const string PluginAuthor = "AuthorName";
         public const string PluginName = "ExamplePlugin";
         public const string PluginVersion = "1.0.0";
+        private int shrineCounter = 0;
 
         // We need our item definition to persist through our functions, and therefore make it a class field.
         private static ItemDef myItemDef;
@@ -130,11 +131,13 @@ namespace ExamplePlugin
         private void Enable()
         {
             On.RoR2.BulletAttack.DefaultHitCallbackImplementation += OnShot;
+            On.RoR2.ShrineChanceBehavior.AddShrineStack += ShrineTrack;
         }
 
         private void Disable()
         {
             On.RoR2.BulletAttack.DefaultHitCallbackImplementation -= OnShot;
+            On.RoR2.ShrineChanceBehavior.AddShrineStack -= ShrineTrack;
         }
 
         private static bool OnShot(On.RoR2.BulletAttack.orig_DefaultHitCallbackImplementation orig, BulletAttack self, ref BulletAttack.BulletHit hitInfo)
@@ -146,6 +149,17 @@ namespace ExamplePlugin
 
             return OrigReturn;
         }
+        // tracks all the times shrines are hit
+        private void ShrineTrack(On.RoR2.ShrineChanceBehavior.orig_AddShrineStack orig, global::RoR2.ShrineChanceBehavior self, global::RoR2.Interactor activator)
+        {
+            shrineCounter++;
+            Log.Info($"shrine was hit. {shrineCounter}");
+
+            orig(self, activator);
+
+        }
+
+        
 
 
         // The Update() method is run on every frame of the game.
