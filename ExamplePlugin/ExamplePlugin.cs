@@ -43,7 +43,10 @@ namespace ExamplePlugin
         public const string PluginAuthor = "AuthorName";
         public const string PluginName = "ExamplePlugin";
         public const string PluginVersion = "1.0.0";
-        private IDictionary<NetworkUser, int> shrinePurchases = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has hit a shrine of chance
+
+        private IDictionary<NetworkUser, int> shrinePurchases = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has used a shrine of chance
+        private IDictionary<NetworkUser, int> shrineWins = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has won a shrine of chance
+        private IDictionary<NetworkUser, int> shrineLoses = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has lost a shrine of chance
 
         // We need our item definition to persist through our functions, and therefore make it a class field.
         private static ItemDef myItemDef;
@@ -138,16 +141,16 @@ namespace ExamplePlugin
 
         private void Enable()  // When this method is called, enabling all mod features
         {
-            On.RoR2.ShrineChanceBehavior.AddShrineStack += ShrineTrack;
+            RoR2.ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
         }
 
 
         private void Disable() // When this method is called, disabling all mod features
         {
-            On.RoR2.ShrineChanceBehavior.AddShrineStack -= ShrineTrack;
+            RoR2.ShrineChanceBehavior.onShrineChancePurchaseGlobal -= ShrineTrack;
         }
 
-
+        /*
         // Tracks all the times shrines are hit. This method is only ever called on the host side
         private void ShrineTrack(On.RoR2.ShrineChanceBehavior.orig_AddShrineStack orig, global::RoR2.ShrineChanceBehavior self, global::RoR2.Interactor activator)
         {
@@ -165,6 +168,38 @@ namespace ExamplePlugin
             Log.Info(networkPlayer);
 
             orig(self, activator);  // Calling original method
+
+        }
+        */
+
+        // Tracks all the times shrines are hit. This method is only ever called on the host side
+        private void ShrineTrack(bool failed, Interactor activator)
+        {
+            var networkPlayer = activator.GetComponent<CharacterBody>().master.playerCharacterMasterController.networkUser;  // Getting the networkUser (unique identification in multiplayer), calling it networkPlayer
+            if (!shrinePurchases.ContainsKey(networkPlayer))  // If networkPlayer isn't in the shrinePurchases dictionary, adding them. Otherwise, incrementing counter by 1
+            {
+                shrinePurchases.Add(networkPlayer, 1);
+                shrineWins.Add(networkPlayer, 0);
+                shrineLoses.Add(networkPlayer, 0);
+            }
+            else
+            {
+                shrinePurchases[networkPlayer]++;
+            }
+
+            if (failed) // If lost shrine, increment lost counter
+            {
+                shrineLoses[networkPlayer]++;
+            }
+            else  // If won shrine, increment won counter
+            {
+                shrineWins[networkPlayer]++;
+            }
+
+            Log.Info(shrinePurchases[networkPlayer]); // Just for demonstration purposes, you can see in the log that the counter goes up seperately for each player and is maintained across stages
+            Log.Info(shrineWins[networkPlayer]);
+            Log.Info(shrineLoses[networkPlayer]);
+
         }
 
 
