@@ -4,6 +4,8 @@ using RoR2;
 using MonoMod;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
+using System.Collections.Generic;
 
 namespace ExamplePlugin
 {
@@ -41,7 +43,7 @@ namespace ExamplePlugin
         public const string PluginAuthor = "AuthorName";
         public const string PluginName = "ExamplePlugin";
         public const string PluginVersion = "1.0.0";
-        private int shrineCounter = 0;
+        private IDictionary<NetworkUser, int> shrinePurchases = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has hit a shrine of chance
 
         // We need our item definition to persist through our functions, and therefore make it a class field.
         private static ItemDef myItemDef;
@@ -98,9 +100,14 @@ namespace ExamplePlugin
             ItemAPI.Add(new CustomItem(myItemDef, displayRules));
 
             // But now we have defined an item, but it doesn't do anything yet. So we'll need to define that ourselves.
-            Enable();
             GlobalEventManager.onCharacterDeathGlobal += GlobalEventManager_onCharacterDeathGlobal;
+
+            // v Not boilerplate code v
+            Enable();
+            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing)
+
         }
+
 
         private void GlobalEventManager_onCharacterDeathGlobal(DamageReport report)
         {
@@ -128,40 +135,58 @@ namespace ExamplePlugin
             }
         }
 
-        private void Enable()
+
+        private void Enable()  // When this method is called, enabling all mod features
         {
-            On.RoR2.BulletAttack.DefaultHitCallbackImplementation += OnShot;
             On.RoR2.ShrineChanceBehavior.AddShrineStack += ShrineTrack;
         }
 
-        private void Disable()
+
+        private void Disable() // When this method is called, disabling all mod features
         {
-            On.RoR2.BulletAttack.DefaultHitCallbackImplementation -= OnShot;
             On.RoR2.ShrineChanceBehavior.AddShrineStack -= ShrineTrack;
         }
 
+
+        // Tracks all the times shrines are hit. This method is only ever called on the host side
+        private void ShrineTrack(On.RoR2.ShrineChanceBehavior.orig_AddShrineStack orig, global::RoR2.ShrineChanceBehavior self, global::RoR2.Interactor activator)
+        {
+            var networkPlayer = activator.GetComponent<CharacterBody>().master.playerCharacterMasterController.networkUser;  // Getting the networkUser (unique identification in multiplayer), calling it networkPlayer
+            if (!shrinePurchases.ContainsKey(networkPlayer))  // If networkPlayer isn't in the shrinePurchases dictionary, adding them. Otherwise, incrementing counter by 1
+            {
+                shrinePurchases.Add(networkPlayer, 1);
+            }
+            else
+            {
+                shrinePurchases[networkPlayer]++;
+            }
+
+            Log.Info(shrinePurchases[networkPlayer]); // Just for demonstration purposes, you can see in the log that the counter goes up seperately for each player and is maintained across stages
+            Log.Info(networkPlayer);
+
+            orig(self, activator);  // Calling original method
+        }
+
+
+        // Old test code for the spawning a behemoth on every bullet spawn
+        /*
         private static bool OnShot(On.RoR2.BulletAttack.orig_DefaultHitCallbackImplementation orig, BulletAttack self, ref BulletAttack.BulletHit hitInfo)
         {
-            // code that will run before the original method
-            var transform = PlayerCharacterMasterController.instances[0].master.GetBodyObject().transform;
-            PickupDropletController.CreatePickupDroplet(PickupCatalog.FindPickupIndex(RoR2Content.Items.Behemoth.itemIndex), transform.position, transform.up * 20f);
+            if (NetworkServer.active)
+            {
+                Log.Info(LocalUserManager.GetFirstLocalUser().cachedBody);
+                var transform = PlayerCharacterMasterController.instances[0].master.GetBodyObject().transform;
+                PickupDropletController.CreatePickupDroplet(PickupCatalog.FindPickupIndex(RoR2Content.Items.Behemoth.itemIndex), transform.position, transform.up * 20f);
+            }
             bool OrigReturn =  orig(self, ref hitInfo);
 
             return OrigReturn;
         }
-        // tracks all the times shrines are hit
-        private void ShrineTrack(On.RoR2.ShrineChanceBehavior.orig_AddShrineStack orig, global::RoR2.ShrineChanceBehavior self, global::RoR2.Interactor activator)
-        {
-            shrineCounter++;
-            Log.Info($"shrine was hit. {shrineCounter}");
-
-            orig(self, activator);
-
-        }
-
-        
+        */
 
 
+        // Old test code for spawning a behemoth and killing the player on f2 press
+        /*
         // The Update() method is run on every frame of the game.
         private void Update()
         {
@@ -180,5 +205,6 @@ namespace ExamplePlugin
                 PickupDropletController.CreatePickupDroplet(PickupCatalog.FindPickupIndex(RoR2Content.Items.Behemoth.itemIndex), transform.position, transform.forward * 20f);
             }
         }
+        */
     }
 }
