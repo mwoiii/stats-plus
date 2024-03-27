@@ -21,9 +21,11 @@ namespace StatsMod
         public const string PluginName = "StatsMod";
         public const string PluginVersion = "1.0.0";
 
-        private IDictionary<NetworkUser, int> shrinePurchases = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has used a shrine of chance
-        private IDictionary<NetworkUser, int> shrineWins = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has won a shrine of chance
-        private IDictionary<NetworkUser, int> shrineLoses = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has lost a shrine of chance
+        private IDictionary<NetworkUser, uint> shrinePurchases = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of chance
+        private IDictionary<NetworkUser, uint> shrineWins = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has won a shrine of chance
+        private IDictionary<NetworkUser, uint> shrineLoses = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has lost a shrine of chance
+
+        private IDictionary<NetworkUser, uint> orderHits = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of order
 
         private IDictionary<NetworkUser, uint> timeStill = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how long each player has been standing still
 
@@ -41,12 +43,15 @@ namespace StatsMod
         private void Enable()  // When this method is called, enabling all mod features
         {
             ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
+            On.RoR2.ShrineRestackBehavior.AddShrineStack += OrderTrack;
             Run.onRunStartGlobal += ResetData;
         }
 
         private void Disable() // When this method is called, disabling all mod features
         {
             ShrineChanceBehavior.onShrineChancePurchaseGlobal -= ShrineTrack;
+            On.RoR2.ShrineRestackBehavior.AddShrineStack -= OrderTrack;
+            Run.onRunStartGlobal -= ResetData;
         }
 
         // Tracks all the times shrines are hit. This method is only ever called on the host side
@@ -119,11 +124,29 @@ namespace StatsMod
         private void ResetData(Run run)
         {
             Log.Info("New run, resetting data dicts");
-            shrinePurchases = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has used a shrine of chance
-            shrineWins = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has won a shrine of chance
-            shrineLoses = new Dictionary<NetworkUser, int>();  // Dictionary for recording how many times each player has lost a shrine of chance
+            shrinePurchases = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of chance
+            shrineWins = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has won a shrine of chance
+            shrineLoses = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has lost a shrine of chance
+
+            orderHits = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of order
 
             timeStill = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how long each player has been standing still
+        }
+        
+        // Counting how many times a player has hit a shrine of order
+        void OrderTrack(On.RoR2.ShrineRestackBehavior.orig_AddShrineStack orig, ShrineRestackBehavior self, Interactor interactor)
+        {
+            var networkPlayer = interactor.GetComponent<CharacterBody>().master.playerCharacterMasterController.networkUser;  // Getting the networkUser (unique identification in multiplayer), calling it networkPlayer
+            if (!orderHits.ContainsKey(networkPlayer))  // If networkPlayer isn't in the orderHits dictionary, adding them. Otherwise, incrementing counter by 1
+            {
+                orderHits.Add(networkPlayer, 1);
+            }
+            else
+            {
+                orderHits[networkPlayer]++;
+            }
+
+            orig(self, interactor);
         }
 
         // Old implementation of the shrine hit method using hooking
@@ -165,7 +188,7 @@ namespace StatsMod
         }
         */
 
-       // Old test code for spawning a behemoth and killing the player on f2 press
+        // Old test code for spawning a behemoth and killing the player on f2 press
         /*
         // The Update() method is run on every frame of the game.
         private void Update()
@@ -184,7 +207,7 @@ namespace StatsMod
             
         }
         */
-        
+
     }
     
 
