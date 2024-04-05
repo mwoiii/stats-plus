@@ -12,16 +12,17 @@ namespace StatsMod
 {
     public class BaseStats
     {
-        public static string GetBaseStats()
+        public static string GetBaseStats(int id)
         {
-            LocalUser localUser = LocalUserManager.GetFirstLocalUser();
-            CharacterBody CachedCharacterBody = localUser.cachedBody;
+            CharacterBody CachedCharacterBody = PlayerCharacterMasterController.instances[id].master.GetBody();  // Getting reference to specific player
 
+            // Stats to collect
             string[] charBodyStats = ["isPlayerControlled", "isSprinting", "outOfDanger", "experience", "level", "maxHealth", "regen", "maxShield", "moveSpeed", "acceleration", "jumpPower", "maxJumpCount", "maxJumpHeight", "damage", "attackSpeed", "crit", "armor", "critHeal", "shouldAim", "bestFitRadius", "spreadBloomAngle", "multiKillCount", "corePosition", "footPosition", "radius", "aimOrigin", "isElite", "isBoss"];
             string[] statSheetStats = ["totalGamesPlayed", "totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt", "highestLevel", "goldCollected", "maxGoldCollected", "totalDistanceTraveled", "totalItemsCollected", "highestItemsCollected", "totalStagesCompleted", "highestStagesCompleted", "totalPurchases", "highestPurchases", "totalGoldPurchases", "highestGoldPurchases", "totalBloodPurchases", "highestBloodPurchases", "totalLunarPurchases", "highestLunarPurchases", "totalTier1Purchases", "highestTier1Purchases", "totalTier2Purchases", "highestTier2Purchases", "totalTier3Purchases", "highestTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"];
 
             StringBuilder sb = new StringBuilder();
 
+            // Getting charBody stats
             foreach (string i in charBodyStats)
             {
                 try
@@ -35,17 +36,11 @@ namespace StatsMod
                 }
             }
 
+            // Getting statSheet stats
             RunReport runReport = RunReport.Generate(Run.instance, GameEndingCatalog.GetGameEndingDef((GameEndingIndex)2));
             RunReport.PlayerInfo playerInfo = null;
 
-            for (int i = 0; i < runReport.playerInfoCount; i++)
-            {
-                if (runReport.GetPlayerInfo(i).isLocalPlayer)
-                {
-                    playerInfo = runReport.GetPlayerInfo(i);
-                    break;
-                }
-            }
+            playerInfo = runReport.GetPlayerInfo(id);
 
             if (playerInfo != null)
             {
@@ -63,7 +58,13 @@ namespace StatsMod
                 }
             }
 
+            // Returning stats
             return sb.ToString();
+        }
+
+        public static int GetPlayerIndex(PlayerCharacterMasterController instance)
+        {
+            return PlayerCharacterMasterController.instances.IndexOf(instance);
         }
     }
 }

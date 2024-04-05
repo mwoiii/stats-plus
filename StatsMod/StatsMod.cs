@@ -45,6 +45,7 @@ namespace StatsMod
             ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
             On.RoR2.ShrineRestackBehavior.AddShrineStack += OrderTrack;
             Run.onRunStartGlobal += ResetData;
+            GlobalEventManager.onCharacterDeathGlobal += GlobalEventManager_onCharacterDeathGlobal;
         }
 
         private void Disable() // When this method is called, disabling all mod features
@@ -147,6 +148,17 @@ namespace StatsMod
             }
 
             orig(self, interactor);
+        }
+
+        // Test code for base stats that triggers on the death of any entity
+        private void GlobalEventManager_onCharacterDeathGlobal(DamageReport report)
+        {
+            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
+            {
+                int id = BaseStats.GetPlayerIndex(player);  // Just a test that both methods work
+                Log.Info(BaseStats.GetBaseStats(id));
+            }
+
         }
 
         // Old implementation of the shrine hit method using hooking
