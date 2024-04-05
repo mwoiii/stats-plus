@@ -10,7 +10,9 @@ using UnityEngine.AddressableAssets;
 
 namespace StatsMod
 {
-    private string GetBaseStats()
+    public class BaseStats
+    {
+        public static string GetBaseStats()
         {
             LocalUser localUser = LocalUserManager.GetFirstLocalUser();
             CharacterBody CachedCharacterBody = localUser.cachedBody;
@@ -61,6 +63,7 @@ namespace StatsMod
                 }
             }
 
-            return sb.ToString()
+            return sb.ToString();
         }
+    }
 }
