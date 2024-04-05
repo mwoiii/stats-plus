@@ -155,8 +155,8 @@ namespace StatsMod
         {
             foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
             {
-                int id = BaseStats.GetPlayerIndex(player);  // Just a test that both methods work
-                Log.Info(BaseStats.GetBaseStats(id));
+                BaseStatsRecord record = new BaseStatsRecord(player, "test"); // Just a test that both methods work
+                Log.Info(record.GetAllAsString());
             }
 
         }
