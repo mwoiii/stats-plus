@@ -12,6 +12,9 @@ namespace StatsMod
 {
     public class CustomStatsRecord : StatsRecord
     {
+        // The names of the custom stats to be recorded
+        public static ReadOnlyCollection<string> customStats = new([]); // Add custom stat names here
+
         public CustomStatsRecord(PlayerCharacterMasterController instance, string name) : base(instance, name) { }
 
         protected override Dictionary<string,object> GetStats()

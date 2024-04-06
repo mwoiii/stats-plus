@@ -26,11 +26,6 @@ namespace StatsMod
         }
         protected abstract Dictionary<string,object> GetStats(); // This method is intended to create the Stats dictionary in inheriting classes
 
-        public static int GetPlayerIndex(PlayerCharacterMasterController instance)
-        {
-            return PlayerCharacterMasterController.instances.IndexOf(instance);
-        }
-
         public bool BelongsTo(PlayerCharacterMasterController instance) { return GetPlayerIndex(instance) == playerIndex; }
 
         public string GetName() { return name; }
@@ -38,9 +33,10 @@ namespace StatsMod
         public object Get(string name)
         {
             if (Stats.ContainsKey(name)) { return Stats[name]; }
-            else
-            {
-                return null; // No error raised here as the FullRecord class will cause this often
+            else 
+            { 
+                Log.Error($"No such stat {name}. null returned");
+                return null;
             }
         }
         public string GetAllAsString()
@@ -48,6 +44,11 @@ namespace StatsMod
             StringBuilder sb = new StringBuilder();
             foreach (string i in Stats.Keys) { sb.AppendLine($"{i}: {Get(i)}"); }
             return sb.ToString();
+        }
+
+        public static int GetPlayerIndex(PlayerCharacterMasterController instance)
+        {
+            return PlayerCharacterMasterController.instances.IndexOf(instance);
         }
     }
 }

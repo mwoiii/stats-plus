@@ -4,6 +4,8 @@ using RoR2;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using System;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace StatsMod
 {
@@ -45,7 +47,8 @@ namespace StatsMod
             ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
             On.RoR2.ShrineRestackBehavior.AddShrineStack += OrderTrack;
             Run.onRunStartGlobal += ResetData;
-            GlobalEventManager.onCharacterDeathGlobal += GlobalEventManager_onCharacterDeathGlobal;
+
+            SceneExitController.onBeginExit += OnBeginExit;
         }
 
         private void Disable() // When this method is called, disabling all mod features
@@ -132,6 +135,8 @@ namespace StatsMod
             orderHits = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of order
 
             timeStill = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how long each player has been standing still
+
+            SetupDatabase();
         }
         
         // Counting how many times a player has hit a shrine of order
@@ -150,15 +155,24 @@ namespace StatsMod
             orig(self, interactor);
         }
 
-        // Test code for base stats that triggers on the death of any entity
-        private void GlobalEventManager_onCharacterDeathGlobal(DamageReport report)
-        {
-            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
-            {
-                BaseStatsRecord record = new BaseStatsRecord(player, "test"); // Just a test that both methods work
-                Log.Info(record.GetAllAsString());
-            }
+        // Code that creates a record of statistics for each player at the end of each stage.
+        private List<PlayerStatsDatabase> StatsDatabase;
 
+        private void SetupDatabase()
+        {
+            StatsDatabase = [];
+            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) { StatsDatabase.Add(new PlayerStatsDatabase(player)); }
+            Log.Info($"Successfully setup full database for {StatsDatabase.Count} players");
+        }
+
+        private void OnBeginExit(SceneExitController a)
+        {
+            string time = $"";
+            foreach (PlayerStatsDatabase i in StatsDatabase) 
+            { 
+                i.TakeRecord(time);
+                Log.Info($"Record made at {time}");
+            }
         }
 
         // Old implementation of the shrine hit method using hooking

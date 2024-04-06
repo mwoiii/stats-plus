@@ -13,8 +13,8 @@ namespace StatsMod
     public class BaseStatsRecord : StatsRecord
     {
         // The names of the base stats to be recorded
-        private ReadOnlyCollection<string> charBodyStats = new ReadOnlyCollection<string>(["isPlayerControlled", "isSprinting", "outOfDanger", "experience", "level", "maxHealth", "regen", "maxShield", "moveSpeed", "acceleration", "jumpPower", "maxJumpCount", "maxJumpHeight", "damage", "attackSpeed", "crit", "armor", "critHeal", "shouldAim", "bestFitRadius", "spreadBloomAngle", "multiKillCount", "corePosition", "footPosition", "radius", "aimOrigin", "isElite", "isBoss"]);
-        private ReadOnlyCollection<string> statSheetStats = new ReadOnlyCollection<string>(["totalGamesPlayed", "totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt", "highestLevel", "goldCollected", "maxGoldCollected", "totalDistanceTraveled", "totalItemsCollected", "highestItemsCollected", "totalStagesCompleted", "highestStagesCompleted", "totalPurchases", "highestPurchases", "totalGoldPurchases", "highestGoldPurchases", "totalBloodPurchases", "highestBloodPurchases", "totalLunarPurchases", "highestLunarPurchases", "totalTier1Purchases", "highestTier1Purchases", "totalTier2Purchases", "highestTier2Purchases", "totalTier3Purchases", "highestTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"]);
+        public static ReadOnlyCollection<string> charBodyStats = new(["isPlayerControlled", "isSprinting", "outOfDanger", "experience", "level", "maxHealth", "regen", "maxShield", "moveSpeed", "acceleration", "jumpPower", "maxJumpCount", "maxJumpHeight", "damage", "attackSpeed", "crit", "armor", "critHeal", "shouldAim", "bestFitRadius", "spreadBloomAngle", "multiKillCount", "corePosition", "footPosition", "radius", "aimOrigin", "isElite", "isBoss"]);
+        public static ReadOnlyCollection<string> statSheetStats = new(["totalGamesPlayed", "totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt", "highestLevel", "goldCollected", "maxGoldCollected", "totalDistanceTraveled", "totalItemsCollected", "highestItemsCollected", "totalStagesCompleted", "highestStagesCompleted", "totalPurchases", "highestPurchases", "totalGoldPurchases", "highestGoldPurchases", "totalBloodPurchases", "highestBloodPurchases", "totalLunarPurchases", "highestLunarPurchases", "totalTier1Purchases", "highestTier1Purchases", "totalTier2Purchases", "highestTier2Purchases", "totalTier3Purchases", "highestTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"]);
 
         public BaseStatsRecord(PlayerCharacterMasterController instance, string name) : base(instance, name) { }
 
@@ -22,20 +22,13 @@ namespace StatsMod
         {
             CharacterBody CachedCharacterBody = PlayerCharacterMasterController.instances[playerIndex].master.GetBody();  // Getting reference to specific player
 
-            Dictionary<string, object> Stats = new Dictionary<string, object>();
+            Dictionary<string, object> Stats = [];
 
             // Getting charBody stats
             foreach (string i in charBodyStats)
             {
-                try
-                {
-                    object stat = typeof(CharacterBody).GetProperty(i).GetValue(CachedCharacterBody);
-                    Stats.Add(i, stat);
-                }
-                catch
-                {
-                    Stats.Add(i, null);
-                }
+                object stat = typeof(CharacterBody).GetProperty(i).GetValue(CachedCharacterBody);
+                Stats.Add(i, stat);
             }
 
             // Getting statSheet stats
@@ -48,16 +41,9 @@ namespace StatsMod
             {
                 foreach (string i in statSheetStats)
                 {
-                    try
-                    {
-                        StatDef statDef = (StatDef)typeof(StatDef).GetField(i).GetValue(null);
-                        object stat = playerInfo.statSheet.GetStatDisplayValue(statDef);
-                        Stats.Add(i, stat);
-                    }
-                    catch
-                    {
-                        Stats.Add(i, null);
-                    }
+                    StatDef statDef = (StatDef)typeof(StatDef).GetField(i).GetValue(null);
+                    object stat = playerInfo.statSheet.GetStatDisplayValue(statDef);
+                    Stats.Add(i, stat);
                 }
             }
 
