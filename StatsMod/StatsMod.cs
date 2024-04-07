@@ -167,10 +167,10 @@ namespace StatsMod
 
         private void OnBeginExit(SceneExitController a)
         {
-            string time = $"";
+            float time = Run.instance.GetRunStopwatch();
             foreach (PlayerStatsDatabase i in StatsDatabase) 
             { 
-                i.TakeRecord(time);
+                i.TakeRecord($"{time}");
                 Log.Info($"Record made at {time}");
             }
         }
