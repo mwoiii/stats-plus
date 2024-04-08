@@ -10,20 +10,18 @@ using System.Text;
 
 namespace StatsMod
 {
-    public class CustomStatsRecord : StatsRecord
+    public class CustomStatsRecord(PlayerCharacterMasterController instance, string name) : StatsRecord(instance, name)
     {
         // The names of the custom stats to be recorded
-        public static ReadOnlyCollection<string> customStats = new(["shrinePurchases", "shrineWins", "orderHits", "timeStill"]); // Add custom stat names here
-
-        public CustomStatsRecord(PlayerCharacterMasterController instance, string name) : base(instance, name) { }
+        public static ReadOnlyCollection<string> customStats = new(["shrinePurchases", "shrineWins", "orderHits", "timeStill"]);
 
         protected override Dictionary<string,object> GetStats()
         {
-            Dictionary<string, object> Stats = new Dictionary<string, object>();
+            Dictionary<string, object> Stats = [];
 
             foreach (string i in customStats)
             {
-                uint stat = CustomStatsHolder.GetStat(PlayerCharacterMasterController.instances[playerIndex], i);
+                uint stat = CustomStatsTracker.GetStat(PlayerCharacterMasterController.instances[playerIndex], i);
                 Stats.Add(i, stat);
             }
 

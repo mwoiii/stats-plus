@@ -40,14 +40,14 @@ namespace StatsMod
 
         private void Enable()  // When this method is called, enabling all mod features
         {
-            CustomStatsHolder.Enable();
+            CustomStatsTracker.Enable();
             Run.onRunStartGlobal += ResetData;
             SceneExitController.onBeginExit += OnBeginExit;
         }
 
         private void Disable() // When this method is called, disabling all mod features
         {
-            CustomStatsHolder.Disable();
+            CustomStatsTracker.Disable();
             Run.onRunStartGlobal -= ResetData;
             SceneExitController.onBeginExit -= OnBeginExit;
         }
@@ -57,7 +57,7 @@ namespace StatsMod
         {
             Log.Info("New run, resetting data dicts");
 
-            CustomStatsHolder.ResetData();
+            CustomStatsTracker.ResetData();
             SetupDatabase();
         }
 

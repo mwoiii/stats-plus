@@ -11,15 +11,10 @@ using HarmonyLib;
 
 namespace StatsMod
 {
-    public class PlayerStatsDatabase // Holds various StatsRecord for a specific instance of a player
+    public class PlayerStatsDatabase(PlayerCharacterMasterController instance) // Holds various StatsRecord for a specific instance of a player
     {
         private readonly List<StatsRecord[]> Database = []; // First index refers to order of records, second refers to base or custom record
-        private PlayerCharacterMasterController player;
-
-        public PlayerStatsDatabase(PlayerCharacterMasterController instance) // Constructor: assigning the PlayerCharacterMasterController instance to 'player'
-        {
-            player = instance;
-        }
+        private readonly PlayerCharacterMasterController player = instance;
 
         public void TakeRecord(string name) // 'name' refers to the name of the record. Names are taken to be the value of in-game timer at the point of taking the record
         {
@@ -45,6 +40,17 @@ namespace StatsMod
                 Series[i] = GetStat(i, name, loc);
             }
             return Series;
+        }
+
+        public string GetStatSeriesAsString(string name) // For logging porpoises
+        {
+            object[] series = GetStatSeries(name);
+            string a = "";
+            foreach (object entry in series)
+            {
+                a += $"{entry}, ";
+            }
+            return $"{name}: {a.Substring(0, a.Length - 2)}";
         }
 
         private int Find(string name)

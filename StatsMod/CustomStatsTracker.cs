@@ -10,13 +10,13 @@ using System.Text;
 
 namespace StatsMod
 {
-    public static class CustomStatsHolder
+    public static class CustomStatsTracker
     {
         // This class implements and holds the values of the custom stats
-        private static Dictionary<PlayerCharacterMasterController, uint> shrinePurchases = new Dictionary<PlayerCharacterMasterController, uint>();  // Dictionary for recording how many times each player has used a shrine of chance
-        private static Dictionary<PlayerCharacterMasterController, uint> shrineWins = new Dictionary<PlayerCharacterMasterController, uint>();  // Dictionary for recording how many times each player has won a shrine of chance
-        private static Dictionary<PlayerCharacterMasterController, uint> orderHits = new Dictionary<PlayerCharacterMasterController, uint>();  // Dictionary for recording how many times each player has used a shrine of order
-        private static Dictionary<PlayerCharacterMasterController, uint> timeStill = new Dictionary<PlayerCharacterMasterController, uint>();  // Dictionary for recording how long each player has been standing still
+        private static Dictionary<PlayerCharacterMasterController, uint> shrinePurchases = [];  // Dictionary for recording how many times each player has used a shrine of chance
+        private static Dictionary<PlayerCharacterMasterController, uint> shrineWins = [];  // Dictionary for recording how many times each player has won a shrine of chance
+        private static Dictionary<PlayerCharacterMasterController, uint> orderHits = [];  // Dictionary for recording how many times each player has used a shrine of order
+        private static Dictionary<PlayerCharacterMasterController, uint> timeStill = [];  // Dictionary for recording how long each player has been standing still
 
         public static void Enable()
         {
@@ -34,10 +34,10 @@ namespace StatsMod
 
         public static void ResetData()
         {
-            shrinePurchases = new Dictionary<PlayerCharacterMasterController, uint>();
-            shrineWins = new Dictionary<PlayerCharacterMasterController, uint>();
-            orderHits = new Dictionary<PlayerCharacterMasterController, uint>();
-            timeStill = new Dictionary<PlayerCharacterMasterController, uint>();
+            shrinePurchases = [];
+            shrineWins = [];
+            orderHits = [];
+            timeStill = [];
         }
 
         public static uint GetStat(PlayerCharacterMasterController player, string statName)
