@@ -16,12 +16,12 @@ namespace StatsMod
         private readonly List<StatsRecord[]> Database = []; // First index refers to order of records, second refers to base or custom record
         private PlayerCharacterMasterController player;
 
-        public PlayerStatsDatabase(PlayerCharacterMasterController instance)
+        public PlayerStatsDatabase(PlayerCharacterMasterController instance) // Constructor: assigning the PlayerCharacterMasterController instance to 'player'
         {
             player = instance;
         }
 
-        public void TakeRecord(string name)
+        public void TakeRecord(string name) // 'name' refers to the name of the record. Names are taken to be the value of in-game timer at the point of taking the record
         {
             Database.Add([new BaseStatsRecord(player, $"{name}Base"), new CustomStatsRecord(player, $"{name}Custom")]);
         }

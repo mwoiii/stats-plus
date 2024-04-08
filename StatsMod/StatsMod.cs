@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using UnityEngine;
 
 namespace StatsMod
 {
@@ -23,13 +24,8 @@ namespace StatsMod
         public const string PluginName = "StatsMod";
         public const string PluginVersion = "1.0.0";
 
-        private IDictionary<NetworkUser, uint> shrinePurchases = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of chance
-        private IDictionary<NetworkUser, uint> shrineWins = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has won a shrine of chance
-        private IDictionary<NetworkUser, uint> shrineLoses = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has lost a shrine of chance
-
-        private IDictionary<NetworkUser, uint> orderHits = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of order
-
-        private IDictionary<NetworkUser, uint> timeStill = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how long each player has been standing still
+        // Code that creates a record of statistics for each player at the end of each stage.
+        private List<PlayerStatsDatabase> StatsDatabase;
 
         // The Awake() method is run at the very start when the game is initialized.
         public void Awake()
@@ -38,125 +34,32 @@ namespace StatsMod
             Log.Init(Logger);
 
             Enable();
-            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing)
+            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing with only one device)
 
         }
 
         private void Enable()  // When this method is called, enabling all mod features
         {
-            ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
-            On.RoR2.ShrineRestackBehavior.AddShrineStack += OrderTrack;
+            CustomStatsHolder.Enable();
             Run.onRunStartGlobal += ResetData;
-
             SceneExitController.onBeginExit += OnBeginExit;
         }
 
         private void Disable() // When this method is called, disabling all mod features
         {
-            ShrineChanceBehavior.onShrineChancePurchaseGlobal -= ShrineTrack;
-            On.RoR2.ShrineRestackBehavior.AddShrineStack -= OrderTrack;
+            CustomStatsHolder.Disable();
             Run.onRunStartGlobal -= ResetData;
-        }
-
-        // Tracks all the times shrines are hit. This method is only ever called on the host side
-        private void ShrineTrack(bool failed, Interactor activator)
-        {
-            var networkPlayer = activator.GetComponent<CharacterBody>().master.playerCharacterMasterController.networkUser;  // Getting the networkUser (unique identification in multiplayer), calling it networkPlayer
-            if (!shrinePurchases.ContainsKey(networkPlayer))  // If networkPlayer isn't in the shrinePurchases dictionary, adding them. Otherwise, incrementing counter by 1
-            {
-                shrinePurchases.Add(networkPlayer, 1);
-                shrineWins.Add(networkPlayer, 0);
-                shrineLoses.Add(networkPlayer, 0);
-            }
-            else
-            {
-                shrinePurchases[networkPlayer]++;
-            }
-
-            if (failed) // If lost shrine, increment lost counter
-            {
-                shrineLoses[networkPlayer]++;
-            }
-            else  // If won shrine, increment won counter
-            {
-                shrineWins[networkPlayer]++;
-            }
-
-            //Log.Info(shrinePurchases[networkPlayer]); // Just for demonstration purposes, you can see in the log that the counter goes up seperately for each player and is maintained across stages
-            //Log.Info(shrineWins[networkPlayer]);
-            //Log.Info(shrineLoses[networkPlayer]);
-
-        }
-
-        // Counting how long a player has stopped moving for
-        public void FixedUpdate()
-        {
-            if (NetworkServer.active)
-            {
-                if (PlayerCharacterMasterController.instances.Count > 0)  // Checking if the player is in a run by checking for existence of PlayerCharacterMasterController, which is created at the start of a run
-                {
-                    foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
-                    {
-                        try
-                        {
-                            var isStill = player.master.GetBody().GetNotMoving();
-                            if (isStill)
-                            {
-                                var networkPlayer = player.networkUser;
-                                if (!timeStill.ContainsKey(networkPlayer))
-                                {
-                                    timeStill.Add(networkPlayer, 1);
-                                }
-                                else
-                                {
-                                    timeStill[networkPlayer]++;
-                                }
-                                // Log.Info(timeStill[networkPlayer] * Time.fixedDeltaTime);  // FixedUpdate is called a different amount of times depending on the framerate. Time.fixedDeltaTime is the frequency that it is called
-                            }
-                        }
-                        catch (NullReferenceException)
-                        {
-                            // Player may be dead, or not properly spawned yet
-                        }
-                    }
-
-                }
-            }
+            SceneExitController.onBeginExit -= OnBeginExit;
         }
 
         // Emptying all the data dictionaries. Called at the start of a run
         private void ResetData(Run run)
         {
             Log.Info("New run, resetting data dicts");
-            shrinePurchases = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of chance
-            shrineWins = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has won a shrine of chance
-            shrineLoses = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has lost a shrine of chance
 
-            orderHits = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how many times each player has used a shrine of order
-
-            timeStill = new Dictionary<NetworkUser, uint>();  // Dictionary for recording how long each player has been standing still
-
+            CustomStatsHolder.ResetData();
             SetupDatabase();
         }
-        
-        // Counting how many times a player has hit a shrine of order
-        void OrderTrack(On.RoR2.ShrineRestackBehavior.orig_AddShrineStack orig, ShrineRestackBehavior self, Interactor interactor)
-        {
-            var networkPlayer = interactor.GetComponent<CharacterBody>().master.playerCharacterMasterController.networkUser;  // Getting the networkUser (unique identification in multiplayer), calling it networkPlayer
-            if (!orderHits.ContainsKey(networkPlayer))  // If networkPlayer isn't in the orderHits dictionary, adding them. Otherwise, incrementing counter by 1
-            {
-                orderHits.Add(networkPlayer, 1);
-            }
-            else
-            {
-                orderHits[networkPlayer]++;
-            }
-
-            orig(self, interactor);
-        }
-
-        // Code that creates a record of statistics for each player at the end of each stage.
-        private List<PlayerStatsDatabase> StatsDatabase;
 
         private void SetupDatabase()
         {
@@ -165,15 +68,18 @@ namespace StatsMod
             Log.Info($"Successfully setup full database for {StatsDatabase.Count} players");
         }
 
+        // Actually taking the records at the end of the stage
         private void OnBeginExit(SceneExitController a)
         {
             float time = Run.instance.GetRunStopwatch();
-            foreach (PlayerStatsDatabase i in StatsDatabase) 
-            { 
+            foreach (PlayerStatsDatabase i in StatsDatabase)
+            {
+                Log.Info("Trying to make a record...");
                 i.TakeRecord($"{time}");
                 Log.Info($"Record made at {time}");
             }
         }
+
 
         // Old implementation of the shrine hit method using hooking
         /*
@@ -235,6 +141,6 @@ namespace StatsMod
         */
 
     }
-    
+
 
 }
