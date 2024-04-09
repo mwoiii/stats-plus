@@ -8,57 +8,140 @@ using System;
 using System.Collections.ObjectModel;
 using System.Text;
 using HarmonyLib;
+using System.Linq;
+using Facepunch.Steamworks;
+using System.Linq.Expressions;
 
 namespace StatsMod
 {
-    public class PlayerStatsDatabase(PlayerCharacterMasterController instance) // Holds various StatsRecord for a specific instance of a player
+    public class PlayerStatsDatabase
     {
-        private readonly List<StatsRecord[]> Database = []; // First index refers to order of records, second refers to base or custom record
-        private readonly PlayerCharacterMasterController player = instance;
+        private readonly PlayerCharacterMasterController player;
+        private readonly int playerIndex;
+        private readonly string playerName;
 
-        public void TakeRecord(string name) // 'name' refers to the name of the record. Names are taken to be the value of in-game timer at the point of taking the record
+        private readonly Dictionary<string, List<object>> Database = [];
+
+        public static readonly string[] charBodyStats = ["isPlayerControlled", "isSprinting", "outOfDanger", "experience", "level", "maxHealth", "regen", "maxShield", "moveSpeed", "acceleration", "jumpPower", "maxJumpCount", "maxJumpHeight", "damage", "attackSpeed", "crit", "armor", "critHeal", "shouldAim", "bestFitRadius", "spreadBloomAngle", "multiKillCount", "corePosition", "footPosition", "radius", "aimOrigin", "isElite", "isBoss"];
+        public static readonly string[] statSheetStats = ["totalGamesPlayed", "totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt", "highestLevel", "goldCollected", "maxGoldCollected", "totalDistanceTraveled", "totalItemsCollected", "highestItemsCollected", "totalStagesCompleted", "highestStagesCompleted", "totalPurchases", "highestPurchases", "totalGoldPurchases", "highestGoldPurchases", "totalBloodPurchases", "highestBloodPurchases", "totalLunarPurchases", "highestLunarPurchases", "totalTier1Purchases", "highestTier1Purchases", "totalTier2Purchases", "highestTier2Purchases", "totalTier3Purchases", "highestTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"];
+        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill"];
+
+        public static IEnumerable<string> allStats = charBodyStats.Union(statSheetStats).Union(customStats);
+
+        public PlayerStatsDatabase(PlayerCharacterMasterController instance)
         {
-            Database.Add([new BaseStatsRecord(player, $"{name}Base"), new CustomStatsRecord(player, $"{name}Custom")]);
-        }
-
-        public object GetStat(int orderIndex, string name, int loc = -1)
-        {
-            if (loc == -1) { loc = Find(name); }
-
-            return Database[orderIndex][loc].Get(name);
-        }
-
-        public object[] GetStatSeries(string name)
-        {
-            int n = Database.Count;
-            int loc = Find(name);
-
-            object[] Series = new object[n];
-
-            for (int i = 0; i < n; i++)
+            player = instance;
+            playerIndex = PlayerCharacterMasterController.instances.IndexOf(player);
+            
+            playerName = player.networkUser.userName;
+            if (playerName.Length == 0)
             {
-                Series[i] = GetStat(i, name, loc);
+                Log.Warning($"No name found for player with index {playerIndex}, will use index to reference instead. Can by caused by singleplayer server testing.");
+                playerName = $"Player {playerIndex}";
             }
-            return Series;
+
+            Database.Add("timestamp", []);
+            foreach (string statName in allStats) { Database.Add(statName, []); }
+        }
+
+        public float TakeRecord()
+        {
+            float timestamp = Run.instance.GetRunStopwatch();
+            Database["timestamp"].Add(timestamp);
+
+            // Getting charBody stats
+            CharacterBody CachedCharacterBody = player.master.GetBody();  // Getting reference to specific player
+            if (CachedCharacterBody == null)
+            {
+                Log.Error($"No body found for {playerName} at {timestamp}. Null entries added to database");
+                foreach (string i in charBodyStats) { Database[i].Add(null); }
+            }
+            else
+            {
+                foreach(string i in charBodyStats)
+                {
+                    object stat = typeof(CharacterBody).GetProperty(i).GetValue(CachedCharacterBody);
+                    Database[i].Add(stat);
+                }
+            }
+
+            // Getting statSheet stats
+            RunReport runReport = RunReport.Generate(Run.instance, GameEndingCatalog.GetGameEndingDef((GameEndingIndex)2));
+            RunReport.PlayerInfo playerInfo = runReport.GetPlayerInfo(playerIndex);
+            if (playerInfo == null)
+            {
+                Log.Error($"No stat sheet found for {playerName} at {timestamp}. Null entries added to database");
+                foreach (string i in statSheetStats) { Database[i].Add(null); }
+            }
+            else
+            {
+                foreach (string i in statSheetStats)
+                {
+                    StatDef statDef = (StatDef)typeof(StatDef).GetField(i).GetValue(null);
+                    object stat = playerInfo.statSheet.GetStatDisplayValue(statDef);
+                    Database[i].Add(stat);
+                }
+            }
+
+            // Getting custom stats
+            foreach (string i in customStats)
+            {
+                try
+                {
+                    uint stat = CustomStatsTracker.GetStat(player, i);
+                    Database[i].Add(stat);
+                }
+                catch (Exception e)
+                {
+                    Database[i].Add(null);
+                    Log.Error($"Failed customStat {i} for {playerName} at {timestamp}, null entry added. \n {e.Message}");
+                }
+            }
+
+            return timestamp;
+        }
+
+        public List<object> GetStatSeries(string name)
+        {
+            return Database[name];
         }
 
         public string GetStatSeriesAsString(string name) // For logging porpoises
         {
-            object[] series = GetStatSeries(name);
-            string a = "";
+            List<object> series = GetStatSeries(name);
+            StringBuilder a = new();
             foreach (object entry in series)
             {
-                a += $"{entry}, ";
+                a.Append($"{entry}, ");
             }
-            return $"{name}: {a.Substring(0, a.Length - 2)}";
+            string b = a.ToString();
+            return $"{name}: {b.Substring(0, Math.Max(0, b.Length - 2))}";
         }
 
-        private int Find(string name)
+        public Dictionary<string, object> GetRecord(int index)
         {
-            if (CustomStatsRecord.customStats.Contains(name)) { return 1; }
-            else { return 0; }
+            Dictionary<string, object> Record = [];
+            foreach (string statName in allStats) { Record.Add(statName, Database[statName][index]); }
+            return Record;
+        }
+
+        public Dictionary<string, object> GetRecord(float time)
+        {
+            List<object> timestamps = Database["timestamp"];
+            int index;
+
+            try { index = timestamps.IndexOf(time); }
+            catch { index = timestamps.IndexOf(timestamps.OrderBy(x => Math.Abs(float.Parse(x.ToString()) - time)).First()); }
+
+            return GetRecord(index);
         }
 
         public bool BelongsTo(PlayerCharacterMasterController instance) { return player == instance; }
+
+        public PlayerCharacterMasterController GetPlayer() { return player; }
+
+        public string GetPlayerName() { return playerName; }
+
+        public int GetPlayerIndex() { return playerIndex; }
     }
 }

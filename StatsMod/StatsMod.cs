@@ -7,6 +7,8 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
+using System.Linq;
+using System.IO;
 
 namespace StatsMod
 {
@@ -24,62 +26,125 @@ namespace StatsMod
         public const string PluginName = "StatsMod";
         public const string PluginVersion = "1.0.0";
 
-        // Code that creates a record of statistics for each player at the end of each stage.
         private List<PlayerStatsDatabase> StatsDatabase;
-
-        // The Awake() method is run at the very start when the game is initialized.
-        public void Awake()
+        
+        public void Awake() // Run at the very start when the game is initialized.
         {
-            // Init our logging class so that we can properly log for debugging
-            Log.Init(Logger);
+            Log.Init(Logger); // Init our logging class so that we can properly log for debugging
 
             Enable();
-            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing with only one device)
-
+            // On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing with only one device)
         }
 
         private void Enable()  // When this method is called, enabling all mod features
         {
             CustomStatsTracker.Enable();
-            Run.onRunStartGlobal += ResetData;
+            Run.onRunStartGlobal += OnRunStart;
             SceneExitController.onBeginExit += OnBeginExit;
+            Run.onServerGameOver += OnRunEnd;
         }
 
         private void Disable() // When this method is called, disabling all mod features
         {
             CustomStatsTracker.Disable();
-            Run.onRunStartGlobal -= ResetData;
+            Run.onRunStartGlobal -= OnRunStart;
             SceneExitController.onBeginExit -= OnBeginExit;
+            Run.onServerGameOver -= OnRunEnd;
         }
 
-        // Emptying all the data dictionaries. Called at the start of a run
-        private void ResetData(Run run)
+        private void Update() // This method is called on every frame of the game.
         {
-            Log.Info("New run, resetting data dicts");
+            if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) { ReportToLog(); }// TEST: Allows for easy testing
+            else if (Input.GetKeyDown(KeyCode.F3) & NetworkServer.active) { TakeRecord(); }
+        }
+
+        // Event and hooking methods
+
+        private void OnRunStart(Run run) // Empties all the data dictionaries & sets up a new database
+        {
+            if (!NetworkServer.active) { return; }
+
+            Log.Info("New run, resetting data dicts and database");
 
             CustomStatsTracker.ResetData();
             SetupDatabase();
+
+            CharacterBody.onBodyStartGlobal += OnBodyStart;
         }
 
-        private void SetupDatabase()
+        private int bodiesCounter = 0; 
+        private void OnBodyStart(CharacterBody self) // For a record to be taken at the start of each stage it is ensured that the body for each player exists
         {
-            StatsDatabase = [];
-            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) { StatsDatabase.Add(new PlayerStatsDatabase(player)); }
-            Log.Info($"Successfully setup full database for {StatsDatabase.Count} players");
-        }
+            if (!NetworkServer.active) { return; }
 
-        // Actually taking the records at the end of the stage
-        private void OnBeginExit(SceneExitController a)
-        {
-            float time = Run.instance.GetRunStopwatch();
-            foreach (PlayerStatsDatabase i in StatsDatabase)
+            if (self.isPlayerControlled)
             {
-                Log.Info("Trying to make a record...");
-                i.TakeRecord($"{time}");
-                Log.Info($"Record made at {time}");
+                bodiesCounter++;
+                if (bodiesCounter == StatsDatabase.Count)
+                {
+                    CharacterBody.onBodyStartGlobal -= OnBodyStart; // Avoids this method being called after a record has been made for the stage
+                    TakeRecord();
+                }
             }
         }
 
+        private void OnBeginExit(SceneExitController x) // Sets up for a new record to be made by OnBodyStart on the next stage
+        {
+            if (!NetworkServer.active) { return; }
+
+            bodiesCounter = 0;
+            CharacterBody.onBodyStartGlobal += OnBodyStart;
+        }     
+
+        private void OnRunEnd(Run x, GameEndingDef y)
+        {
+            if (!NetworkServer.active) { return; }
+
+            ReportToLog(); // TEST: Automatically logs the end of game stats
+        }
+
+        // Misc methods
+
+        private void SetupDatabase() // Sets up StatsDatabase for the players of a new run
+        {
+            if (!NetworkServer.active) { return; }
+
+            StatsDatabase = [];
+            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) 
+            { 
+                StatsDatabase.Add(new PlayerStatsDatabase(player));
+            }
+            Log.Info($"Successfully setup full database for {StatsDatabase.Count} players");
+        }
+
+        private void TakeRecord() // Takes a record in StatsDatabase of each players associated stats
+        {
+            if (!NetworkServer.active) { return; }
+
+            foreach (PlayerStatsDatabase i in StatsDatabase)
+            {
+                float timestamp = i.TakeRecord();
+                Log.Info($"Successfully made record at {timestamp} for {i.GetPlayerName()}");
+            }
+        }
+
+        private void ReportToLog() // Makes a nice report of all the recorded stats to the log.
+        {
+            if (!NetworkServer.active) { return; }
+
+            StringBuilder a = new();
+            foreach (PlayerStatsDatabase i in StatsDatabase)
+            {
+                a.AppendLine($"{i.GetPlayerName()}");
+                i.GetStatSeriesAsString("timestamp");
+                foreach (string j in PlayerStatsDatabase.allStats)
+                {
+                    a.AppendLine(i.GetStatSeriesAsString(j));
+                }
+                a.AppendLine("");
+            }
+            Log.Info(a.ToString());
+        }
 
         // Old implementation of the shrine hit method using hooking
         /*
