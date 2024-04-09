@@ -9,6 +9,7 @@ using System.Text;
 using UnityEngine;
 using System.Linq;
 using System.IO;
+using System.Linq.Expressions;
 
 namespace StatsMod
 {
@@ -42,6 +43,7 @@ namespace StatsMod
             Run.onRunStartGlobal += OnRunStart;
             SceneExitController.onBeginExit += OnBeginExit;
             Run.onServerGameOver += OnRunEnd;
+            NetworkUser.onNetworkUserLost += OnPlayerLeave;
         }
 
         private void Disable() // When this method is called, disabling all mod features
@@ -50,6 +52,7 @@ namespace StatsMod
             Run.onRunStartGlobal -= OnRunStart;
             SceneExitController.onBeginExit -= OnBeginExit;
             Run.onServerGameOver -= OnRunEnd;
+            NetworkUser.onNetworkUserLost -= OnPlayerLeave;
         }
 
         private void Update() // This method is called on every frame of the game.
@@ -59,6 +62,14 @@ namespace StatsMod
         }
 
         // Event and hooking methods
+
+        private void OnPlayerLeave(NetworkUser networkUser)
+        {
+            if (!NetworkServer.active) { return; }
+
+            StatsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
+            Log.Info($"Player left, stats database reduced to {StatsDatabase.Count} players");
+        }
 
         private void OnRunStart(Run run) // Empties all the data dictionaries & sets up a new database
         {
@@ -114,7 +125,7 @@ namespace StatsMod
             { 
                 StatsDatabase.Add(new PlayerStatsDatabase(player));
             }
-            Log.Info($"Successfully setup full database for {StatsDatabase.Count} players");
+            Log.Info($"Successfully setup stats database for {StatsDatabase.Count} players");
         }
 
         private void TakeRecord() // Takes a record in StatsDatabase of each players associated stats
