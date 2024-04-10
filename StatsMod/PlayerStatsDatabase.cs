@@ -94,7 +94,7 @@ namespace StatsMod
             {
                 try
                 {
-                    uint stat = CustomStatsTracker.GetStat(player, i);
+                    var stat = CustomStatsTracker.GetStat(player, i);
                     Database[i].Add(stat);
                 }
                 catch (Exception e)

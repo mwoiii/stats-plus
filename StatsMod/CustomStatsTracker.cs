@@ -5,6 +5,7 @@ using R2API;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 using System.Collections.ObjectModel;
 using System.Text;
 
@@ -16,8 +17,8 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, uint> shrinePurchases = [];  // Dictionary for recording how many times each player has used a shrine of chance
         private static Dictionary<PlayerCharacterMasterController, uint> shrineWins = [];  // Dictionary for recording how many times each player has won a shrine of chance
         private static Dictionary<PlayerCharacterMasterController, uint> orderHits = [];  // Dictionary for recording how many times each player has used a shrine of order
-        private static Dictionary<PlayerCharacterMasterController, uint> timeStill = [];  // Dictionary for recording how long each player has been standing still
-        private static Dictionary<PlayerCharacterMasterController, uint> timeStillPreTP = [];  // Dictionary for recording how long each player has been standing still BEFORE the end of TP event
+        private static Dictionary<PlayerCharacterMasterController, float> timeStill = [];  // Dictionary for recording how long each player has been standing still
+        private static Dictionary<PlayerCharacterMasterController, float> timeStillPreTP = [];  // Dictionary for recording how long each player has been standing still BEFORE the end of TP event
 
         public static void Enable()
         {
@@ -42,7 +43,7 @@ namespace StatsMod
             timeStillPreTP = [];
         }
 
-        public static uint GetStat(PlayerCharacterMasterController player, string statName)
+        public static object GetStat(PlayerCharacterMasterController player, string statName)
         {
             try
             {
@@ -123,31 +124,28 @@ namespace StatsMod
                         {
                             try
                             {
-                                timeStill[player]++;
+                                timeStill[player] += Time.fixedDeltaTime;
                                 if (preTP)
                                 {
-                                    timeStillPreTP[player]++;
+                                    timeStillPreTP[player] += Time.fixedDeltaTime;
                                 }
                                 
                             }
                             catch (KeyNotFoundException) 
                             {
-                                timeStill.Add(player, 1);
+                                timeStill.Add(player, Time.fixedDeltaTime);
                                 if (preTP)
                                 {
-                                    timeStillPreTP.Add(player, 1);
+                                    timeStillPreTP.Add(player, Time.fixedDeltaTime);
                                 }
                                 else
                                 {
                                     timeStillPreTP.Add(player, 0);
                                 }
                             }
-
-                            //Log.Info(timeStill[player] * Time.fixedDeltaTime);  // FixedUpdate is called a different amount of times depending on the framerate. Time.fixedDeltaTime is the frequency that it is called
                         }
                     }
-                    catch (NullReferenceException) { }
-                     // Player may be dead, or not properly spawned yet
+                    catch (NullReferenceException) { }  // Player may be dead, or not properly spawned yet
                 }
             }
             orig(self);
