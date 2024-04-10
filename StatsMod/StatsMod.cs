@@ -11,6 +11,7 @@ using System.Linq;
 using System.IO;
 using System.Linq.Expressions;
 using UnityEngine.SceneManagement;
+using HarmonyLib;
 
 namespace StatsMod
 {
@@ -35,7 +36,6 @@ namespace StatsMod
             Log.Init(Logger); // Init our logging class so that we can properly log for debugging
 
             Enable();
-            // On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing with only one device)
         }
 
         private void Enable()  // When this method is called, enabling all mod features
@@ -58,8 +58,13 @@ namespace StatsMod
 
         private void Update() // This method is called on every frame of the game.
         {
-            if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) { ReportToLog(); }// TEST: Allows for easy testing
-            else if (Input.GetKeyDown(KeyCode.F3) & NetworkServer.active) { TakeRecord(); }
+            if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) { GetRScript(); }
+            
+            else if (Input.GetKeyDown(KeyCode.F3)) 
+            { 
+                On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };  // This just allows connecting to a local server (for multiplayer testing with only one device)
+                Log.Info("Singleplayer server testing enabled");
+            }
         }
 
         // Event and hooking methods
@@ -69,7 +74,6 @@ namespace StatsMod
             if (!NetworkServer.active) { return; }
 
             StatsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
-            Log.Info($"Player left, stats database reduced to {StatsDatabase.Count} players");
         }
 
         private void OnRunStart(Run run) // Empties all the data dictionaries & sets up a new database
@@ -114,6 +118,7 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
+            TakeRecord();
             ReportToLog(); // TEST: Automatically logs the end of game stats
         }
 
@@ -156,6 +161,56 @@ namespace StatsMod
                     a.AppendLine(i.GetStatSeriesAsString(j));
                 }
                 a.AppendLine("");
+            }
+            Log.Info(a.ToString());
+        }
+
+        private void GetRScript()
+        {
+            if (!NetworkServer.active) { return; }
+
+            StringBuilder a = new();
+            
+            List<string> names = [];
+
+            a.AppendLine(StatsDatabase[0].GetStatSeriesAsString("timestamp", true));
+            a.AppendLine();
+
+            foreach (PlayerStatsDatabase i in StatsDatabase)
+            {
+                names.Add(i.GetPlayerName().Replace(" ",""));
+
+                foreach (string j in PlayerStatsDatabase.allStats)
+                {
+                    a.AppendLine($"{names.Last()}.{i.GetStatSeriesAsString(j, true)}");
+                }
+
+                a.AppendLine();
+            }
+
+            string[] cols = ["red", "blue", "green", "yellow"]; // This assumes there is no mod increasing the player count from max of 4
+
+            string colIndicator = "#";
+            for (int i = 0; i < names.Count; i++)
+            {
+                colIndicator += $"{cols[i]} for {names[i]}, ";
+            }
+            colIndicator = colIndicator.Substring(0, Math.Max(0, a.Length - 2));
+
+            foreach (string stat in PlayerStatsDatabase.allStats)
+            {
+                a.AppendLine(colIndicator);
+                string b = "";
+                foreach (string name in names) { b += ($"{name}.{stat}, "); }
+                b = b.Substring(0, Math.Max(0, a.Length - 2));
+                a.AppendLine($"yLimit <- c(min({b}), max({b}))");
+
+                a.AppendLine($"plot(timestamps, {names[0]}.{stat}, type = \"b\", col = \"{cols[0]}\", ylab = \"{stat}\", xlab = \"timestamp\", main = \"{stat}\", ylim = yLimit)");
+                for (int i = 1; i < names.Count; i++)
+                {
+                    a.AppendLine($"points(timestamps, {names[i]}.{stat}, type = \"b\", col=\"{cols[i]}\")");
+                }
+                a.AppendLine();
             }
             Log.Info(a.ToString());
         }

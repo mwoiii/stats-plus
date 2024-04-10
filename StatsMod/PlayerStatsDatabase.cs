@@ -11,6 +11,9 @@ using HarmonyLib;
 using System.Linq;
 using Facepunch.Steamworks;
 using System.Linq.Expressions;
+using System.Xml.Schema;
+using UnityEngine;
+using TMPro;
 
 namespace StatsMod
 {
@@ -24,8 +27,8 @@ namespace StatsMod
 
         // Stats that are useless/unusable ?
         // "critHeal", "multiKillCount", "level", "acceleration", "experience", "isPlayerControlled", "isSprinting", "outOfDanger", "jumpPower", "maxJumpHeight", "shouldAim", "bestFitRadius", "spreadBloomAngle", "corePosition", "footPosition", "radius", "aimOrigin", "isBoss"
-        // "totalStagesCompleted", "maxGoldCollected", "highestLevel", "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] charBodyStats = ["maxHealth", "regen", "maxShield", "moveSpeed", "maxJumpCount", "damage", "attackSpeed", "crit", "armor", "isElite"];
+        // "totalStagesCompleted", "maxGoldCollected", "highestLevel", "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] statSheetStats = ["totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt",  "goldCollected", "totalDistanceTraveled", "totalItemsCollected", "totalPurchases", "totalGoldPurchases", "totalBloodPurchases", "totalLunarPurchases", "totalTier1Purchases", "totalTier2Purchases", "totalTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased"];
         public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillPreTP"];
 
@@ -56,8 +59,8 @@ namespace StatsMod
             CharacterBody CachedCharacterBody = player.master.GetBody();  // Getting reference to specific player
             if (CachedCharacterBody == null)
             {
-                Log.Error($"No body found for {playerName} at {timestamp}. Null entries added to database");
-                foreach (string i in charBodyStats) { Database[i].Add(null); }
+                Log.Warning($"No body found for {playerName} at {timestamp}. Duplicate entries added to database");
+                foreach (string i in charBodyStats) { Database[i].Add(Database[i].Last()); }
             }
             else
             {
@@ -73,8 +76,8 @@ namespace StatsMod
             RunReport.PlayerInfo playerInfo = runReport.GetPlayerInfo(playerIndex);
             if (playerInfo == null)
             {
-                Log.Error($"No stat sheet found for {playerName} at {timestamp}. Null entries added to database");
-                foreach (string i in statSheetStats) { Database[i].Add(null); }
+                Log.Warning($"No stat sheet found for {playerName} at {timestamp}. Duplicate entries added to database");
+                foreach (string i in statSheetStats) { Database[i].Add(Database[i].Last()); }
             }
             else
             {
@@ -96,8 +99,8 @@ namespace StatsMod
                 }
                 catch (Exception e)
                 {
-                    Database[i].Add(null);
-                    Log.Error($"Failed customStat {i} for {playerName} at {timestamp}, null entry added. \n {e.Message}");
+                    Database[i].Add(Database[i].Last());
+                    Log.Warning($"Failed customStat {i} for {playerName} at {timestamp}, duplicate entry added. \n {e.Message}");
                 }
             }
 
@@ -109,16 +112,20 @@ namespace StatsMod
             return Database[name];
         }
 
-        public string GetStatSeriesAsString(string name) // For logging porpoises
+        public string GetStatSeriesAsString(string name, bool rVector = false) // For logging porpoises
         {
             List<object> series = GetStatSeries(name);
             StringBuilder a = new();
             foreach (object entry in series)
             {
-                a.Append($"{entry}, ");
+                if (!rVector) { a.Append($"{entry}, "); }
+                else { a.Append($"{Numberise(entry)}, "); }
             }
-            string b = a.ToString();
-            return $"{name}: {b.Substring(0, Math.Max(0, b.Length - 2))}";
+            string b = a.ToString().Substring(0, Math.Max(0, a.Length - 2));
+
+            if (!rVector) { return $"{name}: {b}"; }
+            else { return $"{name} <- c({b})"; }
+            
         }
 
         public Dictionary<string, object> GetRecord(int index)
@@ -137,6 +144,28 @@ namespace StatsMod
             catch { index = timestamps.IndexOf(timestamps.OrderBy(x => Math.Abs(float.Parse(x.ToString()) - time)).First()); }
 
             return GetRecord(index);
+        }
+
+        private object Numberise(object value) // Takes non numerical object types that can represent numbers and turns them into numerical types to be interpreted.
+        {
+            if (value.GetType() == typeof(bool)) { return (bool)value ? 1 : 0; } // bools turned to 0s or 1s
+            
+            string valueString = value.ToString();
+            
+            if (valueString.Contains(',')) // numbers represented with commmas have commas removed
+            {
+                return int.Parse(valueString, System.Globalization.NumberStyles.AllowThousands);
+            }
+            else if (valueString.Contains(':')) // minute:second representation turned to just seconds
+            {
+                string[] time = valueString.Split(':');
+                return int.Parse(time[0]) * 60 + int.Parse(time[1]);
+            }
+            else if (valueString.Contains("marathons")) // "marathons" representation have the "marathons" part removed
+            {
+                return float.Parse(valueString.Substring(0, valueString.Length - 10));
+            }
+            return value;
         }
 
         public bool BelongsTo(PlayerCharacterMasterController instance) { return player == instance; }
