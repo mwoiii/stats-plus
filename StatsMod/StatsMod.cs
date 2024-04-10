@@ -10,6 +10,7 @@ using UnityEngine;
 using System.Linq;
 using System.IO;
 using System.Linq.Expressions;
+using UnityEngine.SceneManagement;
 
 namespace StatsMod
 {
@@ -75,15 +76,15 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
-            Log.Info("New run, resetting data dicts and database");
-
             CustomStatsTracker.ResetData();
             SetupDatabase();
 
-            CharacterBody.onBodyStartGlobal += OnBodyStart;
+            ResetBodyCounter();
+
+            Log.Info("New run, resetting data dicts and database");
         }
 
-        private int bodiesCounter = 0; 
+        private int bodiesCounter; 
         private void OnBodyStart(CharacterBody self) // For a record to be taken at the start of each stage it is ensured that the body for each player exists
         {
             if (!NetworkServer.active) { return; }
@@ -94,7 +95,10 @@ namespace StatsMod
                 if (bodiesCounter == StatsDatabase.Count)
                 {
                     CharacterBody.onBodyStartGlobal -= OnBodyStart; // Avoids this method being called after a record has been made for the stage
-                    TakeRecord();
+                    if (SceneManager.GetActiveScene().name != "bazaar")
+                    {
+                        TakeRecord();
+                    }
                 }
             }
         }
@@ -103,8 +107,7 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
-            bodiesCounter = 0;
-            CharacterBody.onBodyStartGlobal += OnBodyStart;
+            ResetBodyCounter();
         }     
 
         private void OnRunEnd(Run x, GameEndingDef y)
@@ -147,7 +150,7 @@ namespace StatsMod
             foreach (PlayerStatsDatabase i in StatsDatabase)
             {
                 a.AppendLine($"{i.GetPlayerName()}");
-                i.GetStatSeriesAsString("timestamp");
+                a.AppendLine(i.GetStatSeriesAsString("timestamp"));
                 foreach (string j in PlayerStatsDatabase.allStats)
                 {
                     a.AppendLine(i.GetStatSeriesAsString(j));
@@ -155,6 +158,12 @@ namespace StatsMod
                 a.AppendLine("");
             }
             Log.Info(a.ToString());
+        }
+
+        private void ResetBodyCounter()
+        {
+            bodiesCounter = 0;
+            CharacterBody.onBodyStartGlobal += OnBodyStart;
         }
 
         // Old implementation of the shrine hit method using hooking
