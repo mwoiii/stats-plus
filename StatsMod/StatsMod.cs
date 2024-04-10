@@ -195,14 +195,14 @@ namespace StatsMod
             {
                 colIndicator += $"{cols[i]} for {names[i]}, ";
             }
-            colIndicator = colIndicator.Substring(0, Math.Max(0, a.Length - 2));
+            colIndicator = colIndicator.Substring(0, Math.Max(0, colIndicator.Length - 2));
 
             foreach (string stat in PlayerStatsDatabase.allStats)
             {
                 a.AppendLine(colIndicator);
                 string b = "";
                 foreach (string name in names) { b += ($"{name}.{stat}, "); }
-                b = b.Substring(0, Math.Max(0, a.Length - 2));
+                b = b.Substring(0, Math.Max(0, b.Length - 2));
                 a.AppendLine($"yLimit <- c(min({b}), max({b}))");
 
                 a.AppendLine($"plot(timestamps, {names[0]}.{stat}, type = \"b\", col = \"{cols[0]}\", ylab = \"{stat}\", xlab = \"timestamp\", main = \"{stat}\", ylim = yLimit)");
