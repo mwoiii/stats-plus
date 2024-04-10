@@ -27,7 +27,7 @@ namespace StatsMod
         // "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] charBodyStats = ["level", "maxHealth", "regen", "maxShield", "moveSpeed", "acceleration", "maxJumpCount", "damage", "attackSpeed", "crit", "armor", "critHeal", "multiKillCount", "isElite"];
         public static readonly string[] statSheetStats = ["totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt", "highestLevel", "goldCollected", "maxGoldCollected", "totalDistanceTraveled", "totalItemsCollected", "totalStagesCompleted", "totalPurchases", "totalGoldPurchases", "totalBloodPurchases", "totalLunarPurchases", "totalTier1Purchases", "totalTier2Purchases", "totalTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased"];
-        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill"];
+        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillPreTP"];
 
         public static IEnumerable<string> allStats = charBodyStats.Union(statSheetStats).Union(customStats);
 

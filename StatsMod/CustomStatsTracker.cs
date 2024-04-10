@@ -17,6 +17,7 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, uint> shrineWins = [];  // Dictionary for recording how many times each player has won a shrine of chance
         private static Dictionary<PlayerCharacterMasterController, uint> orderHits = [];  // Dictionary for recording how many times each player has used a shrine of order
         private static Dictionary<PlayerCharacterMasterController, uint> timeStill = [];  // Dictionary for recording how long each player has been standing still
+        private static Dictionary<PlayerCharacterMasterController, uint> timeStillPreTP = [];  // Dictionary for recording how long each player has been standing still BEFORE the end of TP event
 
         public static void Enable()
         {
@@ -38,6 +39,7 @@ namespace StatsMod
             shrineWins = [];
             orderHits = [];
             timeStill = [];
+            timeStillPreTP = [];
         }
 
         public static uint GetStat(PlayerCharacterMasterController player, string statName)
@@ -55,9 +57,11 @@ namespace StatsMod
 
                     case "orderHits":
                         return orderHits[player];
-
                     case "timeStill":
                         return timeStill[player];
+
+                    case "timeStillPreTP":
+                        return timeStillPreTP[player];
 
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
@@ -114,16 +118,31 @@ namespace StatsMod
                     try
                     {
                         var isStill = player.master.GetBody().GetNotMoving();
+                        var preTP = TeleporterInteraction.instance.isCharged;
                         if (isStill)
                         {
-                            if (!timeStill.ContainsKey(player))
-                            {
-                                timeStill.Add(player, 1);
-                            }
-                            else
+                            try
                             {
                                 timeStill[player]++;
+                                if (preTP)
+                                {
+                                    timeStillPreTP[player]++;
+                                }
+                                
                             }
+                            catch (KeyNotFoundException) 
+                            {
+                                timeStill.Add(player, 1);
+                                if (preTP)
+                                {
+                                    timeStillPreTP.Add(player, 1);
+                                }
+                                else
+                                {
+                                    timeStillPreTP.Add(player, 0);
+                                }
+                            }
+
                             //Log.Info(timeStill[player] * Time.fixedDeltaTime);  // FixedUpdate is called a different amount of times depending on the framerate. Time.fixedDeltaTime is the frequency that it is called
                         }
                     }
