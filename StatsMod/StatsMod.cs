@@ -120,6 +120,7 @@ namespace StatsMod
 
             TakeRecord();
             ReportToLog(); // TEST: Automatically logs the end of game stats
+            Analyser analyser = new Analyser(StatsDatabase);
         }
 
         // Misc methods

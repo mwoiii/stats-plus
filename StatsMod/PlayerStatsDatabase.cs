@@ -30,7 +30,7 @@ namespace StatsMod
         public static readonly string[] charBodyStats = ["maxHealth", "regen", "maxShield", "moveSpeed", "maxJumpCount", "damage", "attackSpeed", "crit", "armor", "isElite"];
         // "totalStagesCompleted", "maxGoldCollected", "highestLevel", "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] statSheetStats = ["totalTimeAlive", "totalKills", "totalDeaths", "totalDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt",  "goldCollected", "totalDistanceTraveled", "totalItemsCollected", "totalPurchases", "totalGoldPurchases", "totalBloodPurchases", "totalLunarPurchases", "totalTier1Purchases", "totalTier2Purchases", "totalTier3Purchases", "totalDronesPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased"];
-        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillPreTP"];
+        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillUnsafe"];
 
         public static IEnumerable<string> allStats = charBodyStats.Union(statSheetStats).Union(customStats);
 
@@ -130,6 +130,9 @@ namespace StatsMod
 
         public Dictionary<string, object> GetRecord(int index)
         {
+            if (index < 0) { index = Database["maxHealth"].Count + index; }
+            Log.Info(index);
+            Log.Info(Database.Count);
             Dictionary<string, object> Record = [];
             foreach (string statName in allStats) { Record.Add(statName, Database[statName][index]); }
             return Record;
@@ -146,7 +149,7 @@ namespace StatsMod
             return GetRecord(index);
         }
 
-        private object Numberise(object value) // Takes non numerical object types that can represent numbers and turns them into numerical types to be interpreted.
+        public static object Numberise(object value) // Takes non numerical object types that can represent numbers and turns them into numerical types to be interpreted.
         {
             if (value.GetType() == typeof(bool)) { return (bool)value ? 1 : 0; } // bools turned to 0s or 1s
             

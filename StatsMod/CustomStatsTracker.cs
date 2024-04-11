@@ -18,7 +18,7 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, uint> shrineWins = [];  // Dictionary for recording how many times each player has won a shrine of chance
         private static Dictionary<PlayerCharacterMasterController, uint> orderHits = [];  // Dictionary for recording how many times each player has used a shrine of order
         private static Dictionary<PlayerCharacterMasterController, float> timeStill = [];  // Dictionary for recording how long each player has been standing still
-        private static Dictionary<PlayerCharacterMasterController, float> timeStillPreTP = [];  // Dictionary for recording how long each player has been standing still BEFORE the end of TP event
+        private static Dictionary<PlayerCharacterMasterController, float> timeStillUnsafe = [];  // Dictionary for recording how long each player has been standing still in conditions that are considered unsafe
 
         public static void Enable()
         {
@@ -40,7 +40,7 @@ namespace StatsMod
             shrineWins = [];
             orderHits = [];
             timeStill = [];
-            timeStillPreTP = [];
+            timeStillUnsafe = [];
         }
 
         public static object GetStat(PlayerCharacterMasterController player, string statName)
@@ -61,8 +61,8 @@ namespace StatsMod
                     case "timeStill":
                         return timeStill[player];
 
-                    case "timeStillPreTP":
-                        return timeStillPreTP[player];
+                    case "timeStillUnsafe":
+                        return timeStillUnsafe[player];
 
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
@@ -116,36 +116,40 @@ namespace StatsMod
             {
                 foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
                 {
-                    try
+                    if (!Run.instance.isRunStopwatchPaused)
                     {
-                        var isStill = player.master.GetBody().GetNotMoving();
-                        var preTP = TeleporterInteraction.instance.isCharged;
+                        bool isStill = false;
+                        try
+                        {
+                            isStill = player.master.GetBody().GetNotMoving();
+                        }
+                        catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
+                        var voidLocusSafe = (VoidStageMissionController.instance?.numBatteriesActivated >= VoidStageMissionController.instance?.numBatteriesSpawned) && VoidStageMissionController.instance?.numBatteriesSpawned > 0;
+                        var isSafe = TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
                         if (isStill)
                         {
                             try
                             {
                                 timeStill[player] += Time.fixedDeltaTime;
-                                if (preTP)
+                                if (!isSafe)
                                 {
-                                    timeStillPreTP[player] += Time.fixedDeltaTime;
+                                    timeStillUnsafe[player] += Time.fixedDeltaTime;
                                 }
-                                
                             }
-                            catch (KeyNotFoundException) 
+                            catch (KeyNotFoundException)
                             {
                                 timeStill.Add(player, Time.fixedDeltaTime);
-                                if (preTP)
+                                if (!isSafe)
                                 {
-                                    timeStillPreTP.Add(player, Time.fixedDeltaTime);
+                                    timeStillUnsafe.Add(player, Time.fixedDeltaTime);
                                 }
                                 else
                                 {
-                                    timeStillPreTP.Add(player, 0);
+                                    timeStillUnsafe.Add(player, 0);
                                 }
                             }
                         }
                     }
-                    catch (NullReferenceException) { }  // Player may be dead, or not properly spawned yet
                 }
             }
             orig(self);
