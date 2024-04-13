@@ -157,7 +157,8 @@ namespace StatsMod
             
             if (valueString.Contains(',')) // numbers represented with commmas have commas removed
             {
-                return int.Parse(valueString, System.Globalization.NumberStyles.AllowThousands);
+                try { return Int64.Parse(valueString, System.Globalization.NumberStyles.AllowThousands); }
+                catch ( OverflowException ) {  return -1; }  // Safeguarding, to prevent data from not being recorded at all
             }
             else if (valueString.Contains(':')) // minute:second representation turned to just seconds
             {
