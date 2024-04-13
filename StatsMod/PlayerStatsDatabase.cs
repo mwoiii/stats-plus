@@ -131,8 +131,6 @@ namespace StatsMod
         public Dictionary<string, object> GetRecord(int index)
         {
             if (index < 0) { index = Database["maxHealth"].Count + index; }
-            Log.Info(index);
-            Log.Info(Database.Count);
             Dictionary<string, object> Record = [];
             foreach (string statName in allStats) { Record.Add(statName, Database[statName][index]); }
             return Record;
