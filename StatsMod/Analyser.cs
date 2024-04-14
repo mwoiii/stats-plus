@@ -15,6 +15,8 @@ namespace StatsMod
 
         private List<PlayerStatsDatabase> statsDatabase;
 
+        private List<Award> awards = [];
+
         // Choose a selection of awards for the run? Or calculate for all awards and choose most prevalent?
 
         // Method for each award analysis
@@ -44,11 +46,14 @@ namespace StatsMod
                         highestTime = playerTime;
                     }
                 }
-            }    
+            }
             
             if (highestPlayer != null)
             {
-                Log.Info($"{highestPlayer} is the most enlightened!");
+                const string name = "Enlightened";
+                const string desc = "There's never a bad time to stop, think, and reflect on your journey. This player pondered the meaning of life, and found it, hopefully.";
+                awards.Add(new Award(name, desc, highestPlayer));
+                // Log.Info($"{highestPlayer} is the most enlightened!");
             }
         }
 
