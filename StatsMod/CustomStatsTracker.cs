@@ -19,12 +19,16 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, uint> orderHits = [];  // Dictionary for recording how many times each player has used a shrine of order
         private static Dictionary<PlayerCharacterMasterController, float> timeStill = [];  // Dictionary for recording how long each player has been standing still
         private static Dictionary<PlayerCharacterMasterController, float> timeStillUnsafe = [];  // Dictionary for recording how long each player has been standing still in conditions that are considered unsafe
+        private static Dictionary<PlayerCharacterMasterController, float> timeLowHealth = [];  // Dictionary for recording how long each player has been below 25% health
+        private static Dictionary<PlayerCharacterMasterController, float> fallDamage = [];  // Dictionary for recording how much fall damage each player has taken
 
         public static void Enable()
         {
             ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
             On.RoR2.ShrineRestackBehavior.AddShrineStack += OrderTrack;
             On.RoR2.Run.OnFixedUpdate += stillTrack;
+            On.RoR2.Run.OnFixedUpdate += lowHealthTrack;
+            On.RoR2.CharacterBody.OnTakeDamageServer += fallDamageTrack;
         }
 
         public static void Disable()
@@ -32,6 +36,8 @@ namespace StatsMod
             ShrineChanceBehavior.onShrineChancePurchaseGlobal -= ShrineTrack;
             On.RoR2.ShrineRestackBehavior.AddShrineStack -= OrderTrack;
             On.RoR2.Run.OnFixedUpdate -= stillTrack;
+            On.RoR2.Run.OnFixedUpdate -= lowHealthTrack;
+            On.RoR2.CharacterBody.OnTakeDamageServer -= fallDamageTrack;
         }
 
         public static void ResetData()
@@ -41,6 +47,8 @@ namespace StatsMod
             orderHits = [];
             timeStill = [];
             timeStillUnsafe = [];
+            timeLowHealth = [];
+            fallDamage = [];
         }
 
         public static object GetStat(PlayerCharacterMasterController player, string statName)
@@ -58,11 +66,18 @@ namespace StatsMod
 
                     case "orderHits":
                         return orderHits[player];
+
                     case "timeStill":
                         return timeStill[player];
 
                     case "timeStillUnsafe":
                         return timeStillUnsafe[player];
+
+                    case "timeLowHealth":
+                        return timeLowHealth[player];
+
+                    case "fallDamage":
+                        return fallDamage[player];
 
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
@@ -73,41 +88,69 @@ namespace StatsMod
             catch (KeyNotFoundException) { return 0; }  // If a player is not in a dict., then it is because that stat is 0
         }
 
+
         private static void ShrineTrack(bool failed, Interactor activator)
         {
             var player = activator.GetComponent<CharacterBody>().master.playerCharacterMasterController;  // Getting the networkUser (unique identification in multiplayer), calling it player
-            if (!shrinePurchases.ContainsKey(player))  // If player isn't in the shrinePurchases dictionary, adding them. Otherwise, incrementing counter by 1
-            {
-                shrinePurchases.Add(player, 1);
-                shrineWins.Add(player, 0);
-            }
-            else
+            try
             {
                 shrinePurchases[player]++;
+                if (!failed) { shrineWins[player]++; }
             }
-
-            if (!failed)  // If won shrine, increment won counter
-            {
-                shrineWins[player]++;
+            catch (KeyNotFoundException) {
+                shrinePurchases.Add(player, 1);
+                if (!failed) { shrineWins.Add(player, 1); }
+                else { shrineWins.Add(player, 0); }
             }
-
         }
 
         // Counting how many times a player has hit a shrine of order
-        static void OrderTrack(On.RoR2.ShrineRestackBehavior.orig_AddShrineStack orig, ShrineRestackBehavior self, Interactor interactor)
+        private static void OrderTrack(On.RoR2.ShrineRestackBehavior.orig_AddShrineStack orig, ShrineRestackBehavior self, Interactor interactor)
         {
             var player = interactor.GetComponent<CharacterBody>().master.playerCharacterMasterController;  // Getting the networkUser (unique identification in multiplayer), calling it player
-            if (!orderHits.ContainsKey(player))  // If player isn't in the orderHits dictionary, adding them. Otherwise, incrementing counter by 1
-            {
-                orderHits.Add(player, 1);
-            }
-            else
-            {
-                orderHits[player]++;
-            }
-
+            try { orderHits[player]++; }
+            catch (KeyNotFoundException) { orderHits.Add(player, 1); }
             orig(self, interactor);
         }
+
+
+        private static void fallDamageTrack(On.RoR2.CharacterBody.orig_OnTakeDamageServer orig, CharacterBody self, DamageReport damageReport)
+        {
+            bool isPlayerFall;
+            try { isPlayerFall = damageReport.victimBody.isPlayerControlled && damageReport.isFallDamage; }
+            catch (NullReferenceException) { return; } // Body no longer exists?
+
+            if (isPlayerFall)
+            {
+                PlayerCharacterMasterController player = damageReport.victimMaster.GetComponent<PlayerCharacterMasterController>();
+                try { fallDamage[player] += damageReport.damageDealt; }
+                catch (KeyNotFoundException) { fallDamage.Add(player, damageReport.damageDealt); }
+            }
+            orig(self, damageReport);
+        }
+
+
+        // Lots of this code is largely redundant as it can be implemented in stillTrack, but for clarity it's nice in a separate method. Consider revising if change in naming convention
+        private static void lowHealthTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
+        {
+            if (NetworkServer.active && (PlayerCharacterMasterController.instances.Count > 0))  // These checks may not be necessary but I am too lazy to confirm, it works at least
+            {
+                foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
+                {
+                    try
+                    {
+                        if (player.master.GetBody().healthComponent.isHealthLow)
+                        {
+                            try { timeLowHealth[player] += Time.fixedDeltaTime; }
+                            catch (KeyNotFoundException) { timeLowHealth.Add(player, Time.fixedDeltaTime); }
+                        }
+                    }
+                    catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
+                }
+            }
+            orig(self);
+        }
+
 
         // Counting how long a player has stopped moving for
         private static void stillTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
@@ -119,10 +162,7 @@ namespace StatsMod
                     if (!Run.instance.isRunStopwatchPaused)
                     {
                         bool isStill = false;
-                        try
-                        {
-                            isStill = player.master.GetBody().GetNotMoving();
-                        }
+                        try { isStill = player.master.GetBody().GetNotMoving(); }
                         catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
                         var voidLocusSafe = (VoidStageMissionController.instance?.numBatteriesActivated >= VoidStageMissionController.instance?.numBatteriesSpawned) && VoidStageMissionController.instance?.numBatteriesSpawned > 0;
                         var isSafe = TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
@@ -131,22 +171,12 @@ namespace StatsMod
                             try
                             {
                                 timeStill[player] += Time.fixedDeltaTime;
-                                if (!isSafe)
-                                {
-                                    timeStillUnsafe[player] += Time.fixedDeltaTime;
-                                }
+                                if (!isSafe) { timeStillUnsafe[player] += Time.fixedDeltaTime; }
                             }
-                            catch (KeyNotFoundException)
-                            {
+                            catch (KeyNotFoundException) {
                                 timeStill.Add(player, Time.fixedDeltaTime);
-                                if (!isSafe)
-                                {
-                                    timeStillUnsafe.Add(player, Time.fixedDeltaTime);
-                                }
-                                else
-                                {
-                                    timeStillUnsafe.Add(player, 0);
-                                }
+                                if (!isSafe) { timeStillUnsafe.Add(player, Time.fixedDeltaTime); }
+                                else { timeStillUnsafe.Add(player, 0); }
                             }
                         }
                     }

@@ -118,7 +118,7 @@ namespace StatsMod
         {
             // High move speed, distance travelled, not much damage
             const string name = "Athlete";
-            const string desc = "This player was more concerned with running laps than defeating the enemies.";
+            const string desc = "It would appear that this player was more concerned with running laps than defeating the enemies.";
         }
 
         private void SampleAward()
