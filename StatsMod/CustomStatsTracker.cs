@@ -21,23 +21,26 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, float> timeStillUnsafe = [];  // Dictionary for recording how long each player has been standing still in conditions that are considered unsafe
         private static Dictionary<PlayerCharacterMasterController, float> timeLowHealth = [];  // Dictionary for recording how long each player has been below 25% health
         private static Dictionary<PlayerCharacterMasterController, float> fallDamage = [];  // Dictionary for recording how much fall damage each player has taken
+        private static Dictionary<PlayerCharacterMasterController, uint> coinsSpent = [];  // Dictionary for recording how many lunar coins each player has spent this run
 
         public static void Enable()
         {
             ShrineChanceBehavior.onShrineChancePurchaseGlobal += ShrineTrack;
             On.RoR2.ShrineRestackBehavior.AddShrineStack += OrderTrack;
-            On.RoR2.Run.OnFixedUpdate += stillTrack;
-            On.RoR2.Run.OnFixedUpdate += lowHealthTrack;
-            On.RoR2.CharacterBody.OnTakeDamageServer += fallDamageTrack;
+            On.RoR2.Run.OnFixedUpdate += StillTrack;
+            On.RoR2.Run.OnFixedUpdate += LowHealthTrack;
+            On.RoR2.CharacterBody.OnTakeDamageServer += FallDamageTrack;
+            On.RoR2.NetworkUser.DeductLunarCoins += CoinsTrack;
         }
 
         public static void Disable()
         {
             ShrineChanceBehavior.onShrineChancePurchaseGlobal -= ShrineTrack;
             On.RoR2.ShrineRestackBehavior.AddShrineStack -= OrderTrack;
-            On.RoR2.Run.OnFixedUpdate -= stillTrack;
-            On.RoR2.Run.OnFixedUpdate -= lowHealthTrack;
-            On.RoR2.CharacterBody.OnTakeDamageServer -= fallDamageTrack;
+            On.RoR2.Run.OnFixedUpdate -= StillTrack;
+            On.RoR2.Run.OnFixedUpdate -= LowHealthTrack;
+            On.RoR2.CharacterBody.OnTakeDamageServer -= FallDamageTrack;
+            On.RoR2.NetworkUser.DeductLunarCoins -= CoinsTrack;
         }
 
         public static void ResetData()
@@ -49,6 +52,7 @@ namespace StatsMod
             timeStillUnsafe = [];
             timeLowHealth = [];
             fallDamage = [];
+            coinsSpent = [];
         }
 
         public static object GetStat(PlayerCharacterMasterController player, string statName)
@@ -79,6 +83,9 @@ namespace StatsMod
                     case "fallDamage":
                         return fallDamage[player];
 
+                    case "coinsSpent":
+                        return coinsSpent[player];
+
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
                         return 0;
@@ -107,14 +114,21 @@ namespace StatsMod
         // Counting how many times a player has hit a shrine of order
         private static void OrderTrack(On.RoR2.ShrineRestackBehavior.orig_AddShrineStack orig, ShrineRestackBehavior self, Interactor interactor)
         {
-            var player = interactor.GetComponent<CharacterBody>().master.playerCharacterMasterController;  // Getting the networkUser (unique identification in multiplayer), calling it player
+            var player = interactor.GetComponent<CharacterBody>().master.playerCharacterMasterController;
             try { orderHits[player]++; }
             catch (KeyNotFoundException) { orderHits.Add(player, 1); }
             orig(self, interactor);
         }
 
+        private static void CoinsTrack(On.RoR2.NetworkUser.orig_DeductLunarCoins orig, NetworkUser self, uint count)
+        {
+            var player = self.masterController;
+            try { coinsSpent[player] += count; }
+            catch (KeyNotFoundException) { coinsSpent.Add(player, count); }
+            orig(self, count);
+        }
 
-        private static void fallDamageTrack(On.RoR2.CharacterBody.orig_OnTakeDamageServer orig, CharacterBody self, DamageReport damageReport)
+        private static void FallDamageTrack(On.RoR2.CharacterBody.orig_OnTakeDamageServer orig, CharacterBody self, DamageReport damageReport)
         {
             bool isPlayerFall;
             try { isPlayerFall = damageReport.victimBody.isPlayerControlled && damageReport.isFallDamage; }
@@ -130,8 +144,8 @@ namespace StatsMod
         }
 
 
-        // Lots of this code is largely redundant as it can be implemented in stillTrack, but for clarity it's nice in a separate method. Consider revising if change in naming convention
-        private static void lowHealthTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
+        // Lots of this code is largely redundant as it can be implemented in StillTrack, but for clarity it's nice in a separate method. Consider revising if change in naming convention
+        private static void LowHealthTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
         {
             if (NetworkServer.active && (PlayerCharacterMasterController.instances.Count > 0))  // These checks may not be necessary but I am too lazy to confirm, it works at least
             {
@@ -153,7 +167,7 @@ namespace StatsMod
 
 
         // Counting how long a player has stopped moving for
-        private static void stillTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
+        private static void StillTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
         {
             if (NetworkServer.active && (PlayerCharacterMasterController.instances.Count > 0))  // These checks may not be necessary but I am too lazy to confirm, it works at least
             {
