@@ -30,7 +30,7 @@ namespace StatsMod
         public static readonly string[] charBodyStats = ["maxHealth", "regen", "maxShield", "moveSpeed", "maxJumpCount", "damage", "attackSpeed", "crit", "armor", "isElite"];
         // "totalStagesCompleted", "maxGoldCollected", "highestLevel", "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] statSheetStats = ["totalTimeAlive", "totalKills", "totalMinionKills", "totalDeaths", "totalDamageDealt", "totalMinionDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt",  "goldCollected", "totalDistanceTraveled", "totalItemsCollected", "totalPurchases", "totalGoldPurchases", "totalBloodPurchases", "totalLunarPurchases", "totalTier1Purchases", "totalTier2Purchases", "totalTier3Purchases", "totalDronesPurchased", "totalTurretsPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased"];
-        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillUnsafe", "timeLowHealth", "fallDamage", "coinsSpent", "avenges", "timesLastStanding"];
+        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillUnsafe", "timeLowHealth", "fallDamage", "coinsSpent", "avenges", "timesLastStanding", "itemLead"];
 
         public static IEnumerable<string> allStats = charBodyStats.Union(statSheetStats).Union(customStats);
 
@@ -46,14 +46,14 @@ namespace StatsMod
                 playerName = $"Player {playerIndex}";
             }
 
-            Database.Add("timestamp", []);
+            Database.Add("timestamps", []);
             foreach (string statName in allStats) { Database.Add(statName, []); }
         }
 
         public float TakeRecord()
         {
             float timestamp = Run.instance.GetRunStopwatch();
-            Database["timestamp"].Add(timestamp);
+            Database["timestamps"].Add(timestamp);
 
             // Getting charBody stats
             CharacterBody CachedCharacterBody = player.master.GetBody();  // Getting reference to specific player
@@ -138,7 +138,7 @@ namespace StatsMod
 
         public Dictionary<string, object> GetRecord(float time)
         {
-            List<object> timestamps = Database["timestamp"];
+            List<object> timestamps = Database["timestamps"];
             int index;
 
             try { index = timestamps.IndexOf(time); }

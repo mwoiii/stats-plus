@@ -12,7 +12,7 @@ using System.Text;
 // allies health healed (REQUIRES IL: to even be able to track who the healing came from),
 // items donated (REQUIRES IL: probably. can't even figure out how to do this one), items CLEARLY donated (pinged after purchase) (REQUIRES IL: see before),
 
-// times last one standing (before end of tp), minion-related items at end of run (or peak), item lead
+// minion-related items at end of run (or peak), "stupid" deaths, stupid things to get hit by?
 
 namespace StatsMod
 {

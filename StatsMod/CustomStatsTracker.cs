@@ -1,14 +1,11 @@
 ﻿using RoR2;
-using RoR2.Stats;
-using BepInEx;
-using R2API;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using System.Collections.ObjectModel;
-using System.Text;
 using UnityEngine.SceneManagement;
+using R2API.Utils;
+using System.Linq;
 
 namespace StatsMod
 {
@@ -24,7 +21,8 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, float> fallDamage = [];  // How much fall damage each player has taken
         private static Dictionary<PlayerCharacterMasterController, uint> coinsSpent = [];  // How many lunar coins each player has spent this run
         private static Dictionary<PlayerCharacterMasterController, uint> avenges = [];  // How many times a player has avenged another (killing an enemy that hurt another player)
-        private static Dictionary<PlayerCharacterMasterController, uint> timesLastStanding = [];  // How many times a player has been the last man standing before the end of the tp event
+        private static Dictionary<PlayerCharacterMasterController, uint> timesLastStanding = [];  // How many times a player has been the last man standing before the end of the tp event]
+        private static Dictionary<PlayerCharacterMasterController, uint> currentItemLead = [];  // The current item lead of a player: 0 if not in the lead, >0 otherwise
 
         // Data structures supporting actual stats
         private static Dictionary<CharacterMaster, List<PlayerCharacterMasterController>> avengeHitList = [];  // Dictionary for recording which enemies are avenge targets, and which players they've hit
@@ -39,6 +37,7 @@ namespace StatsMod
             On.RoR2.NetworkUser.DeductLunarCoins += CoinsTrack;
             GlobalEventManager.onCharacterDeathGlobal += AvengesTrack;
             On.RoR2.GlobalEventManager.OnPlayerCharacterDeath += LastStandingTrack;
+            SceneExitController.onBeginExit += ItemLeadTrack;
 
             On.RoR2.DamageReport.ctor += RecordHitList;
             On.RoR2.Run.BeginStage += ClearHitList;
@@ -54,6 +53,7 @@ namespace StatsMod
             On.RoR2.NetworkUser.DeductLunarCoins -= CoinsTrack;
             GlobalEventManager.onCharacterDeathGlobal -= AvengesTrack;
             On.RoR2.GlobalEventManager.OnPlayerCharacterDeath -= LastStandingTrack;
+            SceneExitController.onBeginExit -= ItemLeadTrack;
 
             On.RoR2.DamageReport.ctor -= RecordHitList;
             On.RoR2.Run.BeginStage -= ClearHitList;
@@ -71,6 +71,7 @@ namespace StatsMod
             coinsSpent = [];
             avenges = [];
             timesLastStanding = [];
+            currentItemLead = [];
 
             avengeHitList = [];
         }
@@ -112,13 +113,16 @@ namespace StatsMod
                     case "timesLastStanding":
                         return timesLastStanding[player];
 
+                    case "itemLead":
+                        return currentItemLead[player];
+
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
                         return (uint)0;
 
                 }
             }
-            catch (KeyNotFoundException) { return (uint)0; }  // If a player is not in a dict., then it is because that stat is 0
+            catch (KeyNotFoundException) { return (uint) 0; }  // If a player is not in a dict., then it is because that stat is 0
             // ^ Set to uint for now because type casting is weird. Could specify type for each one with ContainsKey, or find a better way to do this..?
         }
 
@@ -126,6 +130,32 @@ namespace StatsMod
         {
             bool voidLocusSafe = (VoidStageMissionController.instance?.numBatteriesActivated >= VoidStageMissionController.instance?.numBatteriesSpawned) && VoidStageMissionController.instance?.numBatteriesSpawned > 0;
             return TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
+        }
+
+        private static void ItemLeadTrack(SceneExitController sceneExitController)
+        {
+            if (PlayerCharacterMasterController.instances.Count < 2) { return; }
+
+            currentItemLead = currentItemLead.Keys.ToDictionary(key => key, val => (uint)0);  // Set all values to 0
+
+            uint highestLead = 0;
+            uint highestItems = 0;
+            PlayerCharacterMasterController leadingPlayer = null;
+            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
+            {
+                #pragma warning disable Publicizer001
+                uint playerItems = (uint) player.master.inventory.itemStacks.Sum();
+                #pragma warning restore Publicizer001
+                if (playerItems > highestItems) 
+                {
+                    highestLead = playerItems - highestItems;
+                    highestItems = playerItems;
+                    leadingPlayer = player;
+                }
+                else if (highestItems - playerItems < highestLead) { highestLead = highestItems - playerItems; }
+            }
+            if (currentItemLead.ContainsKey(leadingPlayer)) { currentItemLead[leadingPlayer] = highestLead; }
+            else { currentItemLead.Add(leadingPlayer, highestLead); }
         }
 
         private static void ShrineTrack(bool failed, Interactor activator)

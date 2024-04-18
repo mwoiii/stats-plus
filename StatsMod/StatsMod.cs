@@ -4,14 +4,10 @@ using RoR2;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using System;
-using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
 using System.Linq;
-using System.IO;
-using System.Linq.Expressions;
 using UnityEngine.SceneManagement;
-using HarmonyLib;
 
 namespace StatsMod
 {
@@ -156,7 +152,7 @@ namespace StatsMod
             foreach (PlayerStatsDatabase i in StatsDatabase)
             {
                 a.AppendLine($"{i.GetPlayerName()}");
-                a.AppendLine(i.GetStatSeriesAsString("timestamp"));
+                a.AppendLine(i.GetStatSeriesAsString("timestamps"));
                 foreach (string j in PlayerStatsDatabase.allStats)
                 {
                     a.AppendLine(i.GetStatSeriesAsString(j));
@@ -174,7 +170,7 @@ namespace StatsMod
             
             List<string> names = [];
 
-            a.AppendLine(StatsDatabase[0].GetStatSeriesAsString("timestamp", true));
+            a.AppendLine(StatsDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
 
             foreach (PlayerStatsDatabase i in StatsDatabase)
