@@ -11,7 +11,7 @@ using System.Text;
 // stats todo: total procs (REQUIRES IL: to check if item procs off a hit), printing w/o scrap (REQUIRES IL: to access item being used to print),
 // avenges (could record hits in a dict for enemy, removing them when they die), allies health healed (REQUIRES IL: to even be able to track who the healing came from),
 // items donated (REQUIRES IL: probably. can't even figure out how to do this one), items CLEARLY donated (pinged after purchase) (REQUIRES IL: see before),
-// times last one standing (before end of tp), minion-related items at end of run, item lead
+// times last one standing (before end of tp), minion-related items at end of run (or peak), item lead
 
 namespace StatsMod
 {
@@ -179,6 +179,8 @@ namespace StatsMod
             const string name = "Brawler";
             const string desc = "To hell with proc chains. This player stuck to their guns and used raw finesse to survive the planet.";
         }
+
+
 
         private void SampleAward()
         {
