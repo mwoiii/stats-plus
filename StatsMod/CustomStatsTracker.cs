@@ -8,6 +8,7 @@ using System;
 using UnityEngine;
 using System.Collections.ObjectModel;
 using System.Text;
+using UnityEngine.SceneManagement;
 
 namespace StatsMod
 {
@@ -23,6 +24,7 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, float> fallDamage = [];  // How much fall damage each player has taken
         private static Dictionary<PlayerCharacterMasterController, uint> coinsSpent = [];  // How many lunar coins each player has spent this run
         private static Dictionary<PlayerCharacterMasterController, uint> avenges = [];  // How many times a player has avenged another (killing an enemy that hurt another player)
+        private static Dictionary<PlayerCharacterMasterController, uint> timesLastStanding = [];  // How many times a player has been the last man standing before the end of the tp event
 
         // Data structures supporting actual stats
         private static Dictionary<CharacterMaster, List<PlayerCharacterMasterController>> avengeHitList = [];  // Dictionary for recording which enemies are avenge targets, and which players they've hit
@@ -36,6 +38,7 @@ namespace StatsMod
             On.RoR2.CharacterBody.OnTakeDamageServer += FallDamageTrack;
             On.RoR2.NetworkUser.DeductLunarCoins += CoinsTrack;
             GlobalEventManager.onCharacterDeathGlobal += AvengesTrack;
+            On.RoR2.GlobalEventManager.OnPlayerCharacterDeath += LastStandingTrack;
 
             On.RoR2.DamageReport.ctor += RecordHitList;
             On.RoR2.Run.BeginStage += ClearHitList;
@@ -50,6 +53,7 @@ namespace StatsMod
             On.RoR2.CharacterBody.OnTakeDamageServer -= FallDamageTrack;
             On.RoR2.NetworkUser.DeductLunarCoins -= CoinsTrack;
             GlobalEventManager.onCharacterDeathGlobal -= AvengesTrack;
+            On.RoR2.GlobalEventManager.OnPlayerCharacterDeath -= LastStandingTrack;
 
             On.RoR2.DamageReport.ctor -= RecordHitList;
             On.RoR2.Run.BeginStage -= ClearHitList;
@@ -66,6 +70,7 @@ namespace StatsMod
             fallDamage = [];
             coinsSpent = [];
             avenges = [];
+            timesLastStanding = [];
 
             avengeHitList = [];
         }
@@ -104,6 +109,9 @@ namespace StatsMod
                     case "avenges":
                         return avenges[player];
 
+                    case "timesLastStanding":
+                        return timesLastStanding[player];
+
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
                         return (uint)0;
@@ -112,6 +120,12 @@ namespace StatsMod
             }
             catch (KeyNotFoundException) { return (uint)0; }  // If a player is not in a dict., then it is because that stat is 0
             // ^ Set to uint for now because type casting is weird. Could specify type for each one with ContainsKey, or find a better way to do this..?
+        }
+
+        private static bool IsSafe()
+        {
+            bool voidLocusSafe = (VoidStageMissionController.instance?.numBatteriesActivated >= VoidStageMissionController.instance?.numBatteriesSpawned) && VoidStageMissionController.instance?.numBatteriesSpawned > 0;
+            return TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
         }
 
         private static void ShrineTrack(bool failed, Interactor activator)
@@ -216,8 +230,7 @@ namespace StatsMod
                         bool isStill = false;
                         try { isStill = player.master.GetBody().GetNotMoving(); }
                         catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
-                        var voidLocusSafe = (VoidStageMissionController.instance?.numBatteriesActivated >= VoidStageMissionController.instance?.numBatteriesSpawned) && VoidStageMissionController.instance?.numBatteriesSpawned > 0;
-                        var isSafe = TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
+                        bool isSafe = IsSafe();
                         if (isStill)
                         {
                             if (timeStill.ContainsKey(player))
@@ -236,6 +249,27 @@ namespace StatsMod
                 }
             }
             orig(self);
+        }
+
+        private static void LastStandingTrack(On.RoR2.GlobalEventManager.orig_OnPlayerCharacterDeath orig, GlobalEventManager self, DamageReport damageReport, NetworkUser victimNetworkUser)
+        {
+            if (IsSafe() || SceneManager.GetActiveScene().name == "bazaar") { return; }
+            int alivePlayers = 0;
+            PlayerCharacterMasterController alivePlayer = null;
+            foreach (PlayerCharacterMasterController instance in PlayerCharacterMasterController.instances)
+            {
+                if (!instance.master.IsDeadAndOutOfLivesServer())
+                {
+                    alivePlayers++;
+                    alivePlayer = instance;
+                }
+            }
+            if (alivePlayers == 1) 
+            {
+                if (timesLastStanding.ContainsKey(alivePlayer)) { timesLastStanding[alivePlayer]++; }
+                else { timesLastStanding.Add(alivePlayer, 1); }
+            }
+            orig(self, damageReport, victimNetworkUser);
         }
 
         // Lots of this code is largely redundant as it can be implemented in StillTrack, but for clarity it's nice in a separate method. Consider revising if change in naming convention
