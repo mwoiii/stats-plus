@@ -8,8 +8,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Text;
 
-// stats todo: total procs (REQUIRES IL: to check if item procs off a hit), printing w/o scrap (REQUIRES IL: to access item being used to print),
-// allies health healed (REQUIRES IL: to even be able to track who the healing came from),
+// stats todo: total procs (REQUIRES IL: to check if item procs off a hit), allies health healed (REQUIRES IL: to even be able to track who the healing came from),
 // items donated (REQUIRES IL: probably. can't even figure out how to do this one), items CLEARLY donated (pinged after purchase) (REQUIRES IL: see before),
 
 // minion-related items at end of run (or peak), "stupid" deaths, stupid things to get hit by?

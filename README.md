@@ -6,6 +6,3 @@ This is an untitled WIP mod for Risk of Rain 2 that will present awards at the e
 
 ### Installation
 As this mod is unfinished, no download exists on Thunderstore at this time. If for some reason you want to install the mod in its current state, you can clone the repo and build the solution.
-
-### Contributors
-This mod is currently being developed by three people, and does not need further contributors at this time.

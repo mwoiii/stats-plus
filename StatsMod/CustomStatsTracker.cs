@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using R2API.Utils;
 using System.Linq;
+using MonoMod.Cil;
+using Mono.Cecil.Cil;
 
 namespace StatsMod
 {
@@ -23,6 +25,7 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, uint> avenges = [];  // How many times a player has avenged another (killing an enemy that hurt another player)
         private static Dictionary<PlayerCharacterMasterController, uint> timesLastStanding = [];  // How many times a player has been the last man standing before the end of the tp event]
         private static Dictionary<PlayerCharacterMasterController, uint> currentItemLead = [];  // The current item lead of a player: 0 if not in the lead, >0 otherwise
+        private static Dictionary<PlayerCharacterMasterController, uint> nonScrapPrinted = [];  // The amount of items used in printers and soups that were not scrap
 
         // Data structures supporting actual stats
         private static Dictionary<CharacterMaster, List<PlayerCharacterMasterController>> avengeHitList = [];  // Dictionary for recording which enemies are avenge targets, and which players they've hit
@@ -38,6 +41,7 @@ namespace StatsMod
             GlobalEventManager.onCharacterDeathGlobal += AvengesTrack;
             On.RoR2.GlobalEventManager.OnPlayerCharacterDeath += LastStandingTrack;
             SceneExitController.onBeginExit += ItemLeadTrack;
+            IL.RoR2.PurchaseInteraction.OnInteractionBegin += NonScrapTrack;
 
             On.RoR2.DamageReport.ctor += RecordHitList;
             On.RoR2.Run.BeginStage += ClearHitList;
@@ -54,6 +58,7 @@ namespace StatsMod
             GlobalEventManager.onCharacterDeathGlobal -= AvengesTrack;
             On.RoR2.GlobalEventManager.OnPlayerCharacterDeath -= LastStandingTrack;
             SceneExitController.onBeginExit -= ItemLeadTrack;
+            IL.RoR2.PurchaseInteraction.OnInteractionBegin -= NonScrapTrack;
 
             On.RoR2.DamageReport.ctor -= RecordHitList;
             On.RoR2.Run.BeginStage -= ClearHitList;
@@ -72,6 +77,7 @@ namespace StatsMod
             avenges = [];
             timesLastStanding = [];
             currentItemLead = [];
+            nonScrapPrinted = [];
 
             avengeHitList = [];
         }
@@ -116,6 +122,9 @@ namespace StatsMod
                     case "itemLead":
                         return currentItemLead[player];
 
+                    case "nonScrapPrinted":
+                        return nonScrapPrinted[player];
+
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
                         return (uint)0;
@@ -130,6 +139,47 @@ namespace StatsMod
         {
             bool voidLocusSafe = (VoidStageMissionController.instance?.numBatteriesActivated >= VoidStageMissionController.instance?.numBatteriesSpawned) && VoidStageMissionController.instance?.numBatteriesSpawned > 0;
             return TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
+        }
+
+        private static void NonScrapTrack(ILContext il)
+        {
+            ILCursor c = new ILCursor(il);
+            c.GotoNext(
+                x => x.MatchBr(out var _),
+                x => x.MatchLdloca(5),
+                x => x.MatchCallOrCallvirt(typeof(List<ItemIndex>.Enumerator).GetMethod("get_Current")),
+                x => x.MatchStloc(6),
+                x => x.MatchLdloc(0),
+                x => x.MatchCallOrCallvirt<CharacterBody>("get_corePosition"),
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt<Component>("get_gameObject"),
+                x => x.MatchLdloc(6),
+                x => x.MatchCallOrCallvirt<PurchaseInteraction>("CreateItemTakenOrb"),
+                x => x.MatchLdloc(6),
+                x => x.MatchLdloc(1),
+                x => x.MatchBeq(out var _)
+                );
+            c.Index += 13;
+            c.Emit(OpCodes.Ldloc_0);
+            c.Emit(OpCodes.Ldloc, 6);
+            c.EmitDelegate<Action<CharacterBody, ItemIndex>>((interactorBody, item) =>
+            {
+                // placement of this list is inefficient but uhhhhh
+                List<ItemIndex> itemBlacklist = 
+                [
+                    (ItemIndex)136, // RegeneratingScrap
+                    (ItemIndex)140, // ScrapGreen
+                    (ItemIndex)142, // ScrapRed
+                    (ItemIndex)144, // ScrapWhite
+                    (ItemIndex)146  // ScrapYellow
+                ];
+                if (!itemBlacklist.Contains(item))
+                {
+                    var player = interactorBody.master.playerCharacterMasterController;
+                    if (nonScrapPrinted.ContainsKey(player)) { nonScrapPrinted[player]++; }
+                    else { nonScrapPrinted.Add(player, 1); }
+                }
+            });
         }
 
         private static void ItemLeadTrack(SceneExitController sceneExitController)
