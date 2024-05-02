@@ -8,6 +8,7 @@ using R2API.Utils;
 using System.Linq;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
+using System.ComponentModel;
 
 namespace StatsMod
 {
@@ -26,6 +27,7 @@ namespace StatsMod
         private static Dictionary<PlayerCharacterMasterController, uint> timesLastStanding = [];  // How many times a player has been the last man standing before the end of the tp event]
         private static Dictionary<PlayerCharacterMasterController, uint> currentItemLead = [];  // The current item lead of a player: 0 if not in the lead, >0 otherwise
         private static Dictionary<PlayerCharacterMasterController, uint> nonScrapPrinted = [];  // The amount of items used in printers and soups that were not scrap
+        private static Dictionary<PlayerCharacterMasterController, uint> chainableProcs = [];  // The total number of times a player proc'd a vanilla item that can contribute to a proc chain 
 
         // Data structures supporting actual stats
         private static Dictionary<CharacterMaster, List<PlayerCharacterMasterController>> avengeHitList = [];  // Dictionary for recording which enemies are avenge targets, and which players they've hit
@@ -42,6 +44,7 @@ namespace StatsMod
             On.RoR2.GlobalEventManager.OnPlayerCharacterDeath += LastStandingTrack;
             SceneExitController.onBeginExit += ItemLeadTrack;
             IL.RoR2.PurchaseInteraction.OnInteractionBegin += NonScrapTrack;
+            IL.RoR2.GlobalEventManager.OnHitEnemy += chainableProcTrack;
 
             On.RoR2.DamageReport.ctor += RecordHitList;
             On.RoR2.Run.BeginStage += ClearHitList;
@@ -59,6 +62,7 @@ namespace StatsMod
             On.RoR2.GlobalEventManager.OnPlayerCharacterDeath -= LastStandingTrack;
             SceneExitController.onBeginExit -= ItemLeadTrack;
             IL.RoR2.PurchaseInteraction.OnInteractionBegin -= NonScrapTrack;
+            IL.RoR2.GlobalEventManager.OnHitEnemy -= chainableProcTrack;
 
             On.RoR2.DamageReport.ctor -= RecordHitList;
             On.RoR2.Run.BeginStage -= ClearHitList;
@@ -78,6 +82,7 @@ namespace StatsMod
             timesLastStanding = [];
             currentItemLead = [];
             nonScrapPrinted = [];
+            chainableProcs = [];
 
             avengeHitList = [];
         }
@@ -125,6 +130,9 @@ namespace StatsMod
                     case "nonScrapPrinted":
                         return nonScrapPrinted[player];
 
+                    case "chainableProcs":
+                        return chainableProcs[player];
+
                     default:
                         Log.Error("Cannot find specified custom stat, returning 0");
                         return (uint)0;
@@ -141,31 +149,203 @@ namespace StatsMod
             return TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
         }
 
+        private static void chainableProcTrack(ILContext il)
+        {
+            var procDelegate = delegate (DamageInfo damageInfo)
+            {
+                var attackerBody = damageInfo.attacker.GetComponent<CharacterBody>();
+                if (attackerBody?.isPlayerControlled ?? false)
+                {
+                    try
+                    {
+                        var player = attackerBody.master.GetComponent<PlayerCharacterMasterController>();
+                        if (chainableProcs.ContainsKey(player)) { chainableProcs[player]++; }
+                        else { chainableProcs.Add(player, 1); }
+                    }
+                    catch (Exception e) { Log.Error(e); }
+                }
+            };
+
+            ILCursor c = new ILCursor(il);
+            c.GotoNext(
+                x => x.MatchLdloc(1),
+                x => x.MatchCallOrCallvirt<CharacterBody>("get_corePosition"),
+                x => x.MatchLdloc(1),
+                x => x.MatchLdarg(1),
+                x => x.MatchLdfld<DamageInfo>("procChainMask"),
+                x => x.MatchLdarg(2),
+                x => x.MatchLdloc(34),
+                x => x.MatchLdarg(1),
+                x => x.MatchLdfld<DamageInfo>("crit"),
+                x => x.MatchLdsfld(typeof(GlobalEventManager.CommonAssets), "missilePrefab"),
+                x => x.MatchLdcI4(3),
+                x => x.MatchLdcI4(1),
+                x => x.MatchCallOrCallvirt(typeof(MissileUtils), "FireMissile")
+                );
+            c.Index += 13;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            /*
+            ...
+            float missileDamage = Util.OnHitProcDamage(damageInfo.damage, component2.damage, damageCoefficient);    
+            MissileUtils.FireMissile(component2.corePosition, component2, damageInfo.procChainMask, victim, missileDamage, damageInfo.crit, CommonAssets.missilePrefab, DamageColorIndex.Item, addMissileProc: true); <-- matching
+            <delegate here>
+            ...
+            */
+
+            c.GotoNext(
+                x => x.MatchLdloc(54),
+                x => x.MatchCallOrCallvirt<UnityEngine.Object>("op_Implicit"),
+                x => x.MatchBrfalse(out var _)
+                );
+            c.Index += 3;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            /*
+            ...
+			HurtBox hurtBox2 = lightningOrb2.PickNextTarget(damageInfo.position);
+			if ((bool)hurtBox2) <-- matching
+			{
+                <delegate here>
+				lightningOrb2.target = hurtBox2;
+            ...
+            */
+
+            c.GotoNext(
+                x => x.MatchNewobj("RoR2.Orbs.VoidLightningOrb"),
+                x => x.MatchStloc(59)
+                );
+            c.Index += 2;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            /*
+            ...
+			float damageValue4 = Util.OnHitProcDamage(damageInfo.damage, component2.damage, damageCoefficient5);
+			VoidLightningOrb voidLightningOrb = new VoidLightningOrb(); <-- matching
+            <delegate here>
+			voidLightningOrb.origin = damageInfo.position;
+            ...
+            */
+
+            c.GotoNext(
+                x => x.MatchNewobj(typeof(List<HealthComponent>)),
+                x => x.MatchDup(),
+                x => x.MatchLdarg(2),
+                x => x.MatchCallOrCallvirt<GameObject>("GetComponent"),
+                x => x.MatchCallOrCallvirt(typeof(List<HealthComponent>).GetMethod("Add")),
+                x => x.MatchStloc(63)
+                );
+            c.Index += 6;
+            var front = c.Index;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            var end = c.MarkLabel();
+            c.Index = front;
+            c.Emit(OpCodes.Ldloc, 62);
+            c.EmitDelegate<Func<List<HurtBox>, bool>>((list) => { return list.Count > 0; });
+            c.Emit(OpCodes.Brtrue, end);
+            /*
+            ...
+			CollectionPool<HealthComponent, List<HealthComponent>>.ReturnCollection(list2);
+			List<HealthComponent> bouncedObjects = new List<HealthComponent> { victim.GetComponent<HealthComponent>() }; <-- matching
+            <delegate here>
+			float damageCoefficient6 = 1f;
+            ...
+            */
+
+            c.GotoNext(
+                x => x.MatchLdloc(14),
+                x => x.MatchLdcI4(0),
+                x => x.MatchBle(out var _),
+                x => x.MatchLdcR4(5),
+                x => x.MatchLdloc(14),
+                x => x.MatchConvR4(),
+                x => x.MatchMul(),
+                x => x.MatchLdarg(1),
+                x => x.MatchLdfld<DamageInfo>("procCoefficient"),
+                x => x.MatchMul(),
+                x => x.MatchLdloc(4),
+                x => x.MatchCallOrCallvirt(typeof(Util), "CheckRoll"),
+                x => x.MatchBrfalse(out var _)
+                );
+            c.Index += 13;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            /*
+            ...
+		    int itemCount10 = inventory.GetItemCount(RoR2Content.Items.StickyBomb);
+		    if (itemCount10 > 0 && Util.CheckRoll(5f * (float)itemCount10 * damageInfo.procCoefficient, master) && (bool)characterBody) <-- matching
+		    {
+                <delegate here>
+			    bool alive = characterBody.healthComponent.alive;
+            ...
+            */
+
+            c.GotoNext(
+                x => x.MatchLdstr("Prefabs/Effects/MuzzleFlashes/MuzzleflashFireMeatBall"),
+                x => x.MatchCallOrCallvirt(typeof(LegacyResourcesAPI), "Load"),        
+                x => x.MatchLdloc(116),
+                x => x.MatchLdcI4(1),
+                x => x.MatchCallOrCallvirt(typeof(EffectManager), "SpawnEffect")
+                );
+            c.Index += 5;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            /*
+            ...
+			float num12 = 20f;
+			if (Util.CheckRoll(10f * damageInfo.procCoefficient, master)) <-- matching
+			{
+                <delegate here>
+				EffectData effectData = new EffectData
+            ...
+            */
+
+            c.GotoNext(
+                x => x.MatchLdloc(18),
+                x => x.MatchLdcI4(0),
+                x => x.MatchBle(out var _),
+                x => x.MatchLdarg(1),
+                x => x.MatchLdflda<DamageInfo>("procChainMask"),
+                x => x.MatchLdcI4(18),
+                x => x.MatchCallOrCallvirt<ProcChainMask>("HasProc"),
+                x => x.MatchBrtrue(out var _),
+                x => x.MatchLdcR4(10),
+                x => x.MatchLdarg(1),
+                x => x.MatchLdfld<DamageInfo>("procCoefficient"),
+                x => x.MatchMul(),
+                x => x.MatchLdloc(4),
+                x => x.MatchCallOrCallvirt(typeof(Util), "CheckRoll"),
+                x => x.MatchBrfalse(out var _)
+                );
+            c.Index += 15;
+            c.Emit(OpCodes.Ldarg_1);
+            c.EmitDelegate(procDelegate);
+            /*
+            ...
+		    int itemCount16 = inventory.GetItemCount(RoR2Content.Items.LightningStrikeOnHit);
+		    if (itemCount16 > 0 && !damageInfo.procChainMask.HasProc(ProcType.LightningStrikeOnHit) && Util.CheckRoll(10f * damageInfo.procCoefficient, master)) <-- matching
+		    {
+                <delegate here>
+			    float damageValue6 = Util.OnHitProcDamage(damageInfo.damage, component2.damage, 5f * (float)itemCount16);
+            ...
+            */
+        }
+
         private static void NonScrapTrack(ILContext il)
         {
             ILCursor c = new ILCursor(il);
             c.GotoNext(
-                x => x.MatchBr(out var _),
-                x => x.MatchLdloca(5),
-                x => x.MatchCallOrCallvirt(typeof(List<ItemIndex>.Enumerator).GetMethod("get_Current")),
-                x => x.MatchStloc(6),
-                x => x.MatchLdloc(0),
-                x => x.MatchCallOrCallvirt<CharacterBody>("get_corePosition"),
-                x => x.MatchLdarg(0),
-                x => x.MatchCallOrCallvirt<Component>("get_gameObject"),
-                x => x.MatchLdloc(6),
-                x => x.MatchCallOrCallvirt<PurchaseInteraction>("CreateItemTakenOrb"),
                 x => x.MatchLdloc(6),
                 x => x.MatchLdloc(1),
                 x => x.MatchBeq(out var _)
                 );
-            c.Index += 13;
+            c.Index += 3;
             c.Emit(OpCodes.Ldloc_0);
             c.Emit(OpCodes.Ldloc, 6);
             c.EmitDelegate<Action<CharacterBody, ItemIndex>>((interactorBody, item) =>
             {
-                // placement of this list is inefficient but uhhhhh
-                List<ItemIndex> itemBlacklist = 
+                ItemIndex[] itemBlacklist = 
                 [
                     (ItemIndex)136, // RegeneratingScrap
                     (ItemIndex)140, // ScrapGreen
@@ -180,6 +360,14 @@ namespace StatsMod
                     else { nonScrapPrinted.Add(player, 1); }
                 }
             });
+            /*
+            CreateItemTakenOrb(component.corePosition, base.gameObject, item);
+            if (item != itemIndex) <-- matching
+            {
+                < delegate emitted here >
+                PurchaseInteraction.onItemSpentOnPurchase?.Invoke(this, activator);
+            }
+            */
         }
 
         private static void ItemLeadTrack(SceneExitController sceneExitController)
