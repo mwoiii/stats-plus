@@ -8,9 +8,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Text;
 
-// allies health healed (REQUIRES IL: to even be able to track who the healing came from),
-// items donated (REQUIRES IL: probably. can't even figure out how to do this one), items CLEARLY donated (pinged after purchase) (REQUIRES IL: see before),
-
 // minion-related items at end of run (or peak), "stupid" deaths, stupid things to get hit by?
 
 namespace StatsMod
@@ -80,7 +77,7 @@ namespace StatsMod
 
         private void TeamPlayerAward()
         {
-            // (MULTIPLAYER ONLY) -- Killing enemies that hurt teammates, healing allies with bungus/woodsprite, purchasing items and having them be picked up by others (bonus for pings?)
+            // (MULTIPLAYER ONLY) -- Killing enemies that hurt teammates, purchasing items and having them be picked up by others (bonus for pings?)
             const string name = "Team Player";
             const string desc = "Through charity or physical support, this player had everybody's backs.";
         }
