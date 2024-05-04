@@ -398,16 +398,19 @@ namespace StatsMod
             c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate<Action<GenericPickupController, PickupDropletController>>((pickupController, dropletController) =>
             {
-                Vector3 origin = dropletOrigin[dropletController];
-                foreach (var key in lastPurchaseOrigin.Keys)
+                if (pickupController != null)   // fixes the branch. by adding  branch. for the branch.
                 {
-                    if (Vector3.Distance(lastPurchaseOrigin[key], origin) < 5)
+                    Vector3 origin = dropletOrigin[dropletController];
+                    foreach (var key in lastPurchaseOrigin.Keys)
                     {
-                        itemPurchaser.Add(pickupController, key);
-                        break;
+                        if (Vector3.Distance(lastPurchaseOrigin[key], origin) < 5)
+                        {
+                            itemPurchaser.Add(pickupController, key);
+                            break;
+                        }
                     }
+                    dropletOrigin.Remove(dropletController);
                 }
-                dropletOrigin.Remove(dropletController);
             });
             c.Remove(); // removing the 'pop' as the return value is now being used. I hope this does not cause compatibility issues
             /*
@@ -552,6 +555,7 @@ namespace StatsMod
         {
             avengeHitList = [];
             itemPurchaser = [];
+            dropletOrigin = [];
             orig(self);
         }
 
