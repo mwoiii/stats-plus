@@ -67,7 +67,7 @@ namespace StatsMod
 
         private void OnPlayerLeave(NetworkUser networkUser)
         {
-            if (!NetworkServer.active) { return; }
+            if (!NetworkServer.active || networkUser.masterController is null) { return; }
 
             StatsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
         }

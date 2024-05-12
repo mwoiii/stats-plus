@@ -508,8 +508,11 @@ namespace StatsMod
         private static void CoinsTrack(On.RoR2.NetworkUser.orig_DeductLunarCoins orig, NetworkUser self, uint count)
         {
             var player = self.masterController;
-            if (coinsSpent.ContainsKey(player)) { coinsSpent[player] += count; }
-            else { coinsSpent.Add(player, count); }
+            if (player is not null)
+            {
+                if (coinsSpent.ContainsKey(player)) { coinsSpent[player] += count; }
+                else { coinsSpent.Add(player, count); }
+            }
             orig(self, count);
         }
 
