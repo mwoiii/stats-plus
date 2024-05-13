@@ -14,6 +14,7 @@ using System.Linq.Expressions;
 using System.Xml.Schema;
 using UnityEngine;
 using TMPro;
+using StatsMod.CustomStats;
 
 namespace StatsMod
 {
@@ -94,7 +95,7 @@ namespace StatsMod
             {
                 try
                 {
-                    var stat = CustomStatsTracker.GetStat(player, i);
+                    var stat = Tracker.GetStat(player, i);
                     Database[i].Add(stat);
                 }
                 catch (Exception e)

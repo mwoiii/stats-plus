@@ -8,6 +8,7 @@ using System.Text;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.SceneManagement;
+using StatsMod.CustomStats;
 
 namespace StatsMod
 {
@@ -36,7 +37,7 @@ namespace StatsMod
 
         private void Enable()  // When this method is called, enabling all mod features
         {
-            CustomStatsTracker.Enable();
+            Tracker.Enable();
             Run.onRunStartGlobal += OnRunStart;
             SceneExitController.onBeginExit += OnBeginExit;
             Run.onServerGameOver += OnRunEnd;
@@ -45,7 +46,6 @@ namespace StatsMod
 
         private void Disable() // When this method is called, disabling all mod features
         {
-            CustomStatsTracker.Disable();
             Run.onRunStartGlobal -= OnRunStart;
             SceneExitController.onBeginExit -= OnBeginExit;
             Run.onServerGameOver -= OnRunEnd;
@@ -76,7 +76,7 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
-            CustomStatsTracker.ResetData();
+            Tracker.ResetData();
             SetupDatabase();
 
             ResetBodyCounter();
