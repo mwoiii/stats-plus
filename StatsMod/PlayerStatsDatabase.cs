@@ -1,19 +1,9 @@
 ﻿using RoR2;
 using RoR2.Stats;
-using BepInEx;
-using R2API;
-using UnityEngine.Networking;
 using System.Collections.Generic;
 using System;
-using System.Collections.ObjectModel;
 using System.Text;
-using HarmonyLib;
 using System.Linq;
-using Facepunch.Steamworks;
-using System.Linq.Expressions;
-using System.Xml.Schema;
-using UnityEngine;
-using TMPro;
 using StatsMod.CustomStats;
 
 namespace StatsMod
@@ -31,7 +21,7 @@ namespace StatsMod
         public static readonly string[] charBodyStats = ["maxHealth", "regen", "maxShield", "moveSpeed", "maxJumpCount", "damage", "attackSpeed", "crit", "armor", "isElite"];
         // "totalStagesCompleted", "maxGoldCollected", "highestLevel", "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] statSheetStats = ["totalTimeAlive", "totalKills", "totalMinionKills", "totalDeaths", "totalDamageDealt", "totalMinionDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt",  "goldCollected", "totalDistanceTraveled", "totalItemsCollected", "totalPurchases", "totalGoldPurchases", "totalBloodPurchases", "totalLunarPurchases", "totalTier1Purchases", "totalTier2Purchases", "totalTier3Purchases", "totalDronesPurchased", "totalTurretsPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased"];
-        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillUnsafe", "timeLowHealth", "fallDamage", "coinsSpent", "avenges", "timesLastStanding", "itemLead", "nonScrapPrinted", "chainableProcs", "likelyDonations"];
+        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillUnsafe", "timeLowHealth", "fallDamage", "coinsSpent", "avenges", "timesLastStanding", "itemLead", "nonScrapPrinted", "chainableProcs", "likelyDonations", "allyPoints"];
 
         public static IEnumerable<string> allStats = charBodyStats.Union(statSheetStats).Union(customStats);
 

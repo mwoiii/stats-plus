@@ -186,7 +186,7 @@ namespace StatsMod.CustomStats
                 x => x.MatchLdfld<DamageInfo>("procCoefficient"),
                 x => x.MatchMul(),
                 x => x.MatchLdloc(4),
-                x => x.MatchCallOrCallvirt(typeof(Util), "CheckRoll"),
+                x => x.MatchCallOrCallvirt(typeof(RoR2.Util), "CheckRoll"),
                 x => x.MatchBrfalse(out var _)
                 );
             c.Index += 15;

@@ -7,8 +7,7 @@ using System.Collections.Generic;
 using System;
 using System.Collections.ObjectModel;
 using System.Text;
-
-// minion-related items at end of run (or peak), "stupid" deaths, stupid things to get hit by?
+using StatsMod.Awards;
 
 namespace StatsMod
 {
@@ -19,18 +18,14 @@ namespace StatsMod
 
         private List<Award> awards = [];
 
-        // Choose a selection of awards for the run? Or calculate for all awards and choose most prevalent?
-
-        // Method for each award analysis
+        // run all award calculation methods through reflection. choose most prevalent among returned, maybe some other metric too, figure it out when we get there
 
         public Analyser(List<PlayerStatsDatabase> statsDatabase)
         {
             this.statsDatabase = statsDatabase;
-            
-            EnlightenedAward();
-            TricksterAward();
         }
 
+        /*
         private void EnlightenedAward()
         {
             // Sufficient portion time still in danger, and other "bold" behaviours tbd
@@ -56,7 +51,6 @@ namespace StatsMod
             {
                 const string name = "Enlightened";
                 const string desc = "There's never a bad time to stop, think, and reflect on your journey. This player pondered the meaning of life, and found it, hopefully.";
-                awards.Add(new Award(name, desc, highestPlayer));
                 // Log.Info($"{highestPlayer} is the most enlightened!");
             }
         }
@@ -166,7 +160,6 @@ namespace StatsMod
 
                 const string name = "Trickster";
                 string desc = $"It would have taken {timeTaken} of optimal runs to have gathered the amount of coins that this player spent...";
-                awards.Add(new Award(name, desc, highestPlayer));
             }
         }
 
@@ -177,11 +170,6 @@ namespace StatsMod
             const string desc = "To hell with proc chains. This player stuck to their guns and used raw finesse to survive the planet.";
         }
 
-        private void IdiotAward()
-        {
-            // Deaths in stupid places (bazaar), most stage hazards hit (so those poison sacks on that 1 stage 2 variant)
-        }
-
 
         private void SampleAward()
         {
@@ -189,6 +177,9 @@ namespace StatsMod
             const string desc = "";
         }
 
+        */
+
     }
+        
    
 }

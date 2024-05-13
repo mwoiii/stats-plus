@@ -10,6 +10,7 @@ namespace StatsMod.CustomStats
     public static class Tracker
     {
         public static Hashtable statsTable = [];
+        private static bool loaded = false;
 
         public static object GetStat(PlayerCharacterMasterController player, string statName)
         {
@@ -27,10 +28,14 @@ namespace StatsMod.CustomStats
             else { Log.Error("Stat not found, returning 0"); return 0; }
         }
 
-        public static void Enable()
+        public static void Init()
         {
-            var statTypes = typeof(Stat).Assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Stat)));
-            foreach (var stat in statTypes) { stat.GetMethod("Init", BindingFlags.Public | BindingFlags.Static).Invoke(null, null); }
+            if (!loaded)
+            {
+                var statTypes = typeof(Stat).Assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Stat)));
+                foreach (var stat in statTypes) { stat.GetMethod("Init", BindingFlags.Public | BindingFlags.Static).Invoke(null, null); }
+            }
+            loaded = true;
         }
 
         public static void ResetData()
