@@ -34,6 +34,7 @@ namespace StatsMod
         {
             Tracker.Init();
             RecordHandler.Init();
+            StatsButtonController.Init();
         }
 
         private void Update()

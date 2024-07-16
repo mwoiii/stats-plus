@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System;
 using System.Collections.ObjectModel;
 using System.Text;
-using StatsMod.Awards;
 
 namespace StatsMod
 {
@@ -16,7 +15,6 @@ namespace StatsMod
 
         private List<PlayerStatsDatabase> statsDatabase;
 
-        private List<Award> awards = [];
 
         // run all award calculation methods through reflection. choose most prevalent among returned, maybe some other metric too, figure it out when we get there
 

@@ -19,12 +19,14 @@ namespace StatsMod.CustomStats
         new public static void Init()
         {
             On.RoR2.GenericPickupController.AttemptGrant += DonationsTrack;
-            IL.RoR2.PickupDropletController.OnCollisionEnter += GenericDropletHook;
+            IL.RoR2.PickupDropletController.CreatePickup += GenericDropletHook;
             On.RoR2.PickupDropletController.Start += LogDropletOrigin;
             On.RoR2.Interactor.PerformInteraction += LogPurchaseInteraction;
             On.RoR2.Run.BeginStage += ClearDicts;
 
+
             Tracker.statsTable.Add("likelyDonations", likelyDonationsDict);
+
         }
 
         private static void GenericDropletHook(ILContext il)
