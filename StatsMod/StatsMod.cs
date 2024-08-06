@@ -9,11 +9,15 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.SceneManagement;
 using StatsMod.CustomStats;
+using UnityEngine.AddressableAssets;
+using R2API.Networking;
 
 namespace StatsMod
 {
 
     [BepInDependency(LanguageAPI.PluginGUID)]
+
+    [BepInDependency(NetworkingAPI.PluginGUID)]
 
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 
@@ -23,22 +27,24 @@ namespace StatsMod
         public const string PluginAuthor = "pond";
         public const string PluginName = "StatsMod";
         public const string PluginVersion = "1.0.0";
-
+        public static PluginInfo pluginInfo;
+        public static StatsMod instance;
         public void Awake()
         {
+            instance = this;
+            pluginInfo = Info;
             Log.Init(Logger);
-            Init();
-        }
-
-        private void Init()
-        {
+            NetworkingAPI.RegisterMessageType<SyncDatabase>();
+            Assets.PopulateAssets();
             Tracker.Init();
             RecordHandler.Init();
-            StatsButtonController.Init();
+            StatsScreen.Init();
         }
 
         private void Update()
         {
+         /*   
+            
             if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) { RecordHandler.GetRScript(); }
 
             else if (Input.GetKeyDown(KeyCode.F3))
@@ -46,6 +52,7 @@ namespace StatsMod
                 On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };
                 Log.Info("Singleplayer server testing enabled");
             }
+         */            
         }
     }
 }

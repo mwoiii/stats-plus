@@ -14,7 +14,7 @@ namespace StatsMod
         private readonly int playerIndex;
         private readonly string playerName;
 
-        private readonly Dictionary<string, List<object>> Database = [];
+        public readonly Dictionary<string, List<object>> Database = [];
 
         // Stats that are useless/unusable ?
         // "critHeal", "multiKillCount", "level", "acceleration", "experience", "isPlayerControlled", "isSprinting", "outOfDanger", "jumpPower", "maxJumpHeight", "shouldAim", "bestFitRadius", "spreadBloomAngle", "corePosition", "footPosition", "radius", "aimOrigin", "isBoss"

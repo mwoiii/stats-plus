@@ -6,11 +6,26 @@ using StatsMod.CustomStats;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using RoR2;
+using R2API.Networking;
+using System.Security.Principal;
+using R2API.Networking.Interfaces;
+using static Facepunch.Steamworks.LobbyList.Filter;
+using Newtonsoft.Json;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 namespace StatsMod
 {
     public static class RecordHandler
     {
-        private static List<PlayerStatsDatabase> statsDatabase;
+        public static List<PlayerStatsDatabase> statsDatabase
+        {
+            get { return _statsDatabase; }
+        }
+
+        private static List<PlayerStatsDatabase> _statsDatabase;
+
+        public static List<IndependentEntry> independentDatabase;
+
         private static int bodiesCounter = 0;
 
         public static void Init()
@@ -65,13 +80,23 @@ namespace StatsMod
             ResetBodyCounter();
         }
 
+        private static void CreateIndependentDatabase()
+        {
+            independentDatabase = [];
+            foreach (PlayerStatsDatabase i in statsDatabase)
+            {
+                independentDatabase.Add(new IndependentEntry(i.Database, i.GetPlayerName()));
+            }
+        }
+
         private static void GameOverReport(Run run, GameEndingDef gameEndingDef)
         {
             if (!NetworkServer.active) { return; }
 
             TakeRecord();
             ReportToLog(); // TEST: Automatically logs the end of game stats
-            Analyser analyser = new Analyser(statsDatabase);
+            CreateIndependentDatabase();
+            StatsMod.instance.gameObject.AddComponent<DatabaseSender>();
         }
 
         // Misc methods
@@ -80,7 +105,7 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
-            statsDatabase = [];
+            _statsDatabase = [];
             foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
             {
                 statsDatabase.Add(new PlayerStatsDatabase(player));
@@ -117,20 +142,18 @@ namespace StatsMod
             Log.Info(a.ToString());
         }
 
-        public static void GetRScript()
+        public static string GetRScript()
         {
-            if (!NetworkServer.active) { return; }
-
             StringBuilder a = new();
 
             List<string> names = [];
 
-            a.AppendLine(statsDatabase[0].GetStatSeriesAsString("timestamps", true));
+            a.AppendLine(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
 
-            foreach (PlayerStatsDatabase i in statsDatabase)
+            foreach (IndependentEntry i in independentDatabase)
             {
-                names.Add(i.GetPlayerName().Replace(" ", ""));
+                names.Add(i.playerName.Replace(" ", ""));
 
                 foreach (string j in PlayerStatsDatabase.allStats)
                 {
@@ -164,7 +187,7 @@ namespace StatsMod
                 }
                 a.AppendLine();
             }
-            Log.Info(a.ToString());
+            return a.ToString();
         }
 
         private static void ResetBodyCounter()
