@@ -46,8 +46,6 @@ namespace StatsMod
             Single smallestY = -5f;
             Single largestY = 5f;
 
-            Log.Info(index);
-
             List<object> stat = RecordHandler.independentDatabase[index].GetStatSeries(statName);
             for (int i = 0; i < timestamps.Count; i++)
             {

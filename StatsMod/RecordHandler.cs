@@ -43,7 +43,7 @@ namespace StatsMod
             statsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
         }
 
-        private static void ResetDatabase(Run run) // Empties all the data dictionaries & sets up a new database
+        private static void ResetDatabase(Run run) // Empties all the data dictionaries & sets up a new databases
         {
             if (!NetworkServer.active) { return; }
 
@@ -94,7 +94,7 @@ namespace StatsMod
             if (!NetworkServer.active) { return; }
 
             TakeRecord();
-            ReportToLog(); // TEST: Automatically logs the end of game stats
+            //ReportToLog(); // TEST: Automatically logs the end of game stats
             CreateIndependentDatabase();
             StatsMod.instance.gameObject.AddComponent<DatabaseSender>();
         }
