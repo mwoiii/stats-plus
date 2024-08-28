@@ -8,7 +8,8 @@ using UnityEngine;
 
 namespace StatsMod.CustomStats
 {
-    internal class ChainableProcs : Stat
+    // Commenting out Stat inheritance as to disable it
+    internal class ChainableProcs // : Stat
     {
         private static Dictionary<PlayerCharacterMasterController, uint> chainableProcsDict = [];  // The total number of times a player proc'd a vanilla item that can contribute to a proc chain
         new public static void Init()

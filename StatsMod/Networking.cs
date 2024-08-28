@@ -4,7 +4,6 @@ using System.Text;
 using R2API.Networking.Interfaces;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
-using SimpleJSON;
 using Newtonsoft.Json.Bson;
 using RoR2;
 using StatsMod.CustomStats;

@@ -21,22 +21,21 @@ namespace StatsMod.CustomStats
         {
             ILCursor c = new ILCursor(il);
             c.GotoNext(
-                x => x.MatchLdloc(6),
-                x => x.MatchLdloc(1),
+                x => x.MatchLdloc(13),
+                x => x.MatchLdloc(2),
                 x => x.MatchBeq(out var _)
                 );
-            c.Index += 3;
             c.Emit(OpCodes.Ldloc_0);
-            c.Emit(OpCodes.Ldloc, 6);
+            c.Emit(OpCodes.Ldloc, 13);
             c.EmitDelegate<Action<CharacterBody, ItemIndex>>((interactorBody, item) =>
             {
                 ItemIndex[] itemBlacklist =
                 [
-                    (ItemIndex)136, // RegeneratingScrap
-                    (ItemIndex)140, // ScrapGreen
-                    (ItemIndex)142, // ScrapRed
-                    (ItemIndex)144, // ScrapWhite
-                    (ItemIndex)146  // ScrapYellow
+                    (ItemIndex)151, // RegeneratingScrap
+                    (ItemIndex)156, // ScrapGreen
+                    (ItemIndex)158, // ScrapRed
+                    (ItemIndex)160, // ScrapWhite
+                    (ItemIndex)162  // ScrapYellow
                 ];
                 if (!itemBlacklist.Contains(item))
                 {
