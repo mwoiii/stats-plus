@@ -33,7 +33,7 @@
       <HintPath>libs\MMHOOK_RoR2.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
-      <HintPath>..\Thunderstore\Unity.Mathematics.dll</HintPath>
+      <HintPath>libs\Unity.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="Zio">
       <HintPath>libs\Zio.dll</HintPath>
