@@ -1,32 +1,23 @@
 ﻿using RoR2;
-using UnityEngine.Networking;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using static UnityEngine.ParticleSystem.PlaybackState;
-using LeTai.Asset.TranslucentImage;
-using UnityEngine.UI;
-using UnityEngine.Analytics;
 
-namespace StatsMod
-{
+namespace StatsMod {
     // base code shamelessly taken from restartbutton mod
-    public class StatsButtonController : MonoBehaviour
-    {
+    public class StatsButtonController : MonoBehaviour {
 
-        static bool shouldShowOnReportScreen(RunReport runReport)
-        {
-            // Eclipse and Prismatics for some reason just immediately disconnect on run end, no matter what.
-            // This is fine for singleplayer since we can just override the behavior, but there's nothing we can do for clients in multiplayer
-            if (!NetworkServer.dontListen)
-            {
-                switch (Run.instance)
-                {
-                    case EclipseRun:
-                    case WeeklyRun:
-                    case InfiniteTowerRun:
-                        return false;
-                }
+        static bool ShouldShowOnReportScreen(RunReport runReport) {
+
+            // Will show on all gamemodes now, as it doesn't actually break anything, 
+            // just might not be as cool to look at due to time between records
+            /*
+            switch (Run.instance) {
+                case EclipseRun:
+                case WeeklyRun:
+                    break;
+                case InfiniteTowerRun:
+                    return false;
             }
+            */
 
             if (runReport is null)
                 return false;
@@ -39,21 +30,16 @@ namespace StatsMod
 
         Transform _statsButtonInstance;
 
-        public bool ButtonIsVisible
-        {
-            get
-            {
+        public bool ButtonIsVisible {
+            get {
                 return _statsButtonInstance && _statsButtonInstance.gameObject.activeSelf;
             }
-            set
-            {
+            set {
                 if (ButtonIsVisible == value)
                     return;
 
-                if (!_statsButtonInstance && value)
-                {
-                    if (StatsScreen.continueButton)
-                    {
+                if (!_statsButtonInstance && value) {
+                    if (StatsScreen.continueButton) {
                         GameObject statsButton = Instantiate(StatsScreen.continueButton.gameObject, StatsScreen.continueButton.transform.parent); // creating a copy of the continue button
                         StatsScreen.continueButton.transform.SetAsLastSibling(); // moving the continue button back to the front
                         statsButton.name = "StatsButton";
@@ -65,39 +51,32 @@ namespace StatsMod
 
                         // changing text in the button
                         RoR2.UI.LanguageTextMeshController labelText = statsButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
-                        if (labelText)
-                        {
+                        if (labelText) {
                             labelText.token = "Stats Plus";
                         }
 
                         // this seems to stop [NO GAMEPAD BINDING] from appearing
                         Transform glyphTransform = statsButton.transform.Find("GenericGlyph");
-                        if (glyphTransform)
-                        {
+                        if (glyphTransform) {
                             glyphTransform.gameObject.SetActive(false);
                         }
 
                         _statsButtonInstance = statsButton.transform;
                     }
-                }
-                else
-                {
+                } else {
                     _statsButtonInstance.gameObject.SetActive(value);
                 }
             }
         }
 
-        public void OnSetDisplayData(RoR2.UI.GameEndReportPanelController.DisplayData newDisplayData)
-        {
-            ButtonIsVisible = shouldShowOnReportScreen(newDisplayData.runReport);
+        public void OnSetDisplayData(RoR2.UI.GameEndReportPanelController.DisplayData newDisplayData) {
+            ButtonIsVisible = ShouldShowOnReportScreen(newDisplayData.runReport);
         }
 
-        void Awake()
-        {
+        void Awake() {
             StatsScreen.gameEndReportPanelController = GetComponent<RoR2.UI.GameEndReportPanelController>();
             StatsScreen.continueButton = StatsScreen.gameEndReportPanelController.continueButton;
-            if (StatsScreen.graph == null)
-            {
+            if (StatsScreen.graph == null) {
                 StatsScreen.CreateGraph();
             }
         }
