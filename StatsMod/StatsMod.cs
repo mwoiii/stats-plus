@@ -1,6 +1,8 @@
 using BepInEx;
 using R2API.Networking;
 using StatsMod.CustomStats;
+using UnityEngine.Networking;
+using UnityEngine;
 
 namespace StatsMod {
 
@@ -27,10 +29,11 @@ namespace StatsMod {
         }
 
         private void Update() {
+            if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active)
+            {
+                Log.Info(RecordHandler.GetRScript());
+            }
             /*   
-
-               if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) { RecordHandler.GetRScript(); }
-
                else if (Input.GetKeyDown(KeyCode.F3))
                {
                    On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };

@@ -13,6 +13,7 @@ using static Facepunch.Steamworks.LobbyList.Filter;
 using Newtonsoft.Json;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine;
 namespace StatsMod
 {
     public static class RecordHandler
@@ -144,47 +145,51 @@ namespace StatsMod
 
         public static string GetRScript()
         {
-            StringBuilder a = new();
-
-            List<string> names = [];
-
-            a.AppendLine(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
+            CreateIndependentDatabase();
+            StringBuilder a = new(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
 
-            foreach (IndependentEntry i in independentDatabase)
+            List<string> names = [];
+            string namevec = "";
+            string colvec = "";
+
+            for (int u = 0; u < independentDatabase.Count; u++)
             {
-                names.Add(i.playerName.Replace(" ", ""));
+                IndependentEntry i = independentDatabase[u];
+               
+                names.Add(i.playerName);
+                
+                namevec += $"\"{i.playerName}\", ";
+                colvec += $"rainbow({independentDatabase.Count})[{u+1}], ";
 
                 foreach (string j in PlayerStatsDatabase.allStats)
                 {
-                    a.AppendLine($"{names.Last()}.{i.GetStatSeriesAsString(j, true)}");
+                    a.AppendLine($"player{u}.{i.GetStatSeriesAsString(j, true)}");
                 }
 
                 a.AppendLine();
             }
+            
+            namevec = namevec.Substring(0, Math.Max(0, namevec.Length - 2));
+            colvec = colvec.Substring(0, Math.Max(0, colvec.Length - 2));
+            string colkey = $"legend(\"topright\", inset=c(-0.25,0), legend=c({namevec}), col = c({colvec}), lty=1, pch=1, bty=\"n\")";
 
-            string[] cols = ["red", "blue", "green", "yellow"]; // This assumes there is no mod increasing the player count from max of 4
-
-            string colIndicator = "#";
-            for (int i = 0; i < names.Count; i++)
-            {
-                colIndicator += $"{cols[i]} for {names[i]}, ";
-            }
-            colIndicator = colIndicator.Substring(0, Math.Max(0, colIndicator.Length - 2));
+            a.AppendLine("par(xpd = TRUE, mar = c(5, 4, 4, 6))");
+            a.AppendLine();
 
             foreach (string stat in PlayerStatsDatabase.allStats)
             {
-                a.AppendLine(colIndicator);
                 string b = "";
-                foreach (string name in names) { b += ($"{name}.{stat}, "); }
+                for (int i = 0; i < names.Count; i++) { b += ($"player{i}.{stat}, "); }
                 b = b.Substring(0, Math.Max(0, b.Length - 2));
                 a.AppendLine($"yLimit <- c(min({b}), max({b}))");
 
-                a.AppendLine($"plot(timestamps, {names[0]}.{stat}, type = \"b\", col = \"{cols[0]}\", ylab = \"{stat}\", xlab = \"timestamp\", main = \"{stat}\", ylim = yLimit)");
+                a.AppendLine($"plot(timestamps, player0.{stat}, type = \"b\", col = rainbow({names.Count})[1], ylab = \"{stat}\", xlab = \"timestamp\", main = \"{stat}\", ylim = yLimit)");
                 for (int i = 1; i < names.Count; i++)
                 {
-                    a.AppendLine($"points(timestamps, {names[i]}.{stat}, type = \"b\", col=\"{cols[i]}\")");
+                    a.AppendLine($"points(timestamps, player{i}.{stat}, type = \"b\", col=rainbow({names.Count})[{i+1}])");
                 }
+                a.AppendLine(colkey);
                 a.AppendLine();
             }
             return a.ToString();
