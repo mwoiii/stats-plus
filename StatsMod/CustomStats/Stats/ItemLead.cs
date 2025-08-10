@@ -22,13 +22,12 @@ namespace StatsMod.CustomStats
         {
             if (PlayerCharacterMasterController.instances.Count < 2) { return; }
 
-            itemLeadDict = itemLeadDict.Keys.ToDictionary(key => key, val => (uint)0);  // Set all values to 0
-
             uint highestLead = 0;
             uint highestItems = 0;
             PlayerCharacterMasterController leadingPlayer = null;
             foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
             {
+                itemLeadDict[player] = 0;
 #pragma warning disable Publicizer001
                 uint playerItems = (uint)player.master.inventory.itemStacks.Sum();
 #pragma warning restore Publicizer001
