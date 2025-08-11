@@ -5,7 +5,6 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 namespace StatsMod {
-    // base code shamelessly taken from restartbutton mod
     public static class StatsScreen {
         public static RoR2.UI.HUD CurrentHud = null; // most recent hud object, for stats panel
 
@@ -99,9 +98,17 @@ namespace StatsMod {
                 // creation of the close button
                 CreateCloseButton(panel, obj);
 
+                PlotStartingStat();
+
             } else {
                 Log.Warning("CurrentHud is null!");
             }
+        }
+
+        private static void PlotStartingStat() {
+            // the first plot doesn't have lines for some reason
+            // instead of understanding and fixing this, what if plot on start......
+            graph.GetComponent<GraphHandler>().PlotStat("maxHealth", -1);
         }
 
         public static void CreatePlayerPlotButtons(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat) {
