@@ -1,26 +1,20 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
 
-namespace StatsMod
-{
-    public class GraphSettings : MonoBehaviour
-    {
+namespace StatsMod {
+    public class GraphSettings : MonoBehaviour {
         [Header("Graph Settings")]
         [Space]
         public int updatePeriod = 5;
         [SerializeField] private Vector2 graphSize = new Vector2(0.5208f * Screen.width, 0.7037f * Screen.height);
-        public Vector2 GraphSize
-        {
+
+        public Vector2 GraphSize {
             get { return graphSize; }
             set { graphSize = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePositionAndScale | GraphHandler.UpdateMethod.UpdateContent | GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [SerializeField] private Vector2 graphScale = new Vector2(100f, 100f);
-        public Vector2 GraphScale
-        {
+        public Vector2 GraphScale {
             get { return graphScale; }
             set { graphScale = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePositionAndScale | GraphHandler.UpdateMethod.UpdateContent | GraphHandler.UpdateMethod.UpdateGridLines); }
         }
@@ -28,121 +22,104 @@ namespace StatsMod
         [Header("Graph Visuals")]
         [Space]
         [SerializeField] private Color backgroundColor = new Color(0, 0, 0, 1f);
-        public Color BackgroundColor
-        {
+        public Color BackgroundColor {
             get { return backgroundColor; }
             set { backgroundColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateOutlines); }
         }
         [SerializeField] private float outlineWidth = 5f;
-        public float OutlineWidth
-        {
+        public float OutlineWidth {
             get { return outlineWidth; }
             set { outlineWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateOutlines); }
         }
 
         [SerializeField] private Color outlineColor = new Color(1f, 1f, 1f, 1f);
-        public Color OutlineColor
-        {
+        public Color OutlineColor {
             get { return outlineColor; }
             set { outlineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateOutlines); }
         }
         [Space]
         [SerializeField] private float lineWidth = 4f;
-        public float LineWidth
-        {
+        public float LineWidth {
             get { return lineWidth; }
             set { lineWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateContent); }
         }
         [SerializeField] private Color lineColor = new Color(1f, 0.35f, 0f, 1f);
-        public Color LineColor
-        {
+        public Color LineColor {
             get { return lineColor; }
             set { lineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateContent); }
         }
         [Space]
         public Sprite PointSprite = Assets.mainAssetBundle.LoadAsset<Sprite>("cross.png");
         [SerializeField] private float pointRadius = 5f;
-        public float PointRadius
-        {
+        public float PointRadius {
             get { return pointRadius; }
             set { pointRadius = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
-        [SerializeField] private Color pointColor = new Color(1f, 0.35f, 0f, 1f);
-        public Color PointColor
-        {
+        [SerializeField] private Color pointColor = Color.white;
+        public Color PointColor {
             get { return pointColor; }
             set { pointColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         [Space]
         [SerializeField] private float pointHoverRadius = 15f;
-        public float PointHoverRadius
-        {
+        public float PointHoverRadius {
             get { return pointHoverRadius; }
             set { pointHoverRadius = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         public float PointHoverSpeed = 5f;
 
-        [SerializeField] private Color pointHoverColor = new Color(1, 0.6f, 0, 1f);
-        public Color PointHoverColor
-        {
+        [SerializeField] private Color pointHoverColor = Color.white;
+        public Color PointHoverColor {
             get { return pointHoverColor; }
             set { pointHoverColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         [Space]
         [SerializeField] private float pointLockedRadius = 17f;
-        public float PointLockedRadius
-        {
+        public float PointLockedRadius {
             get { return pointLockedRadius; }
             set { pointLockedRadius = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         public float PointLockedSpeed = 5f;
 
-        [SerializeField] private Color pointLockedColor = new Color(1, 0.8f, 0, 1f);
-        public Color PointLockedColor
-        {
+        [SerializeField] private Color pointLockedColor = Color.white;
+        public Color PointLockedColor {
             get { return pointLockedColor; }
             set { pointLockedColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         [Space]
         [SerializeField] private float unfixedPointOutlineWidth = 10f;
-        public float UnfixedPointOutlineWidth
-        {
+        public float UnfixedPointOutlineWidth {
             get { return unfixedPointOutlineWidth; }
             set { unfixedPointOutlineWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
-        [SerializeField] private Color unfixedPointOutlineColor = new Color(1f, 0.35f, 0f, 1f);
-        public Color UnfixedPointOutlineColor
-        {
+        [SerializeField] private Color unfixedPointOutlineColor = Color.white;
+        public Color UnfixedPointOutlineColor {
             get { return unfixedPointOutlineColor; }
             set { unfixedPointOutlineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         [Space]
         [SerializeField] private float unfixedPointOutlineHoverWidth = 15f;
-        public float UnfixedPointOutlineHoverWidth
-        {
+        public float UnfixedPointOutlineHoverWidth {
             get { return unfixedPointOutlineHoverWidth; }
             set { unfixedPointOutlineHoverWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         public float UnfixedPointOutlineHoverSpeed = 5f;
 
         [Space]
-        [SerializeField] private Color unfixedPointOutlineHoverColor = new Color(0, 0.5f, 1f, 1f);
-        public Color UnfixedPointOutlineHoverColor
-        {
+        [SerializeField] private Color unfixedPointOutlineHoverColor = Color.white;
+        public Color UnfixedPointOutlineHoverColor {
             get { return unfixedPointOutlineHoverColor; }
             set { unfixedPointOutlineHoverColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         [Space]
         [SerializeField] private float fixedPointOutlineWidth = 17f;
-        public float FixedPointOutlineWidth
-        {
+        public float FixedPointOutlineWidth {
             get { return fixedPointOutlineWidth; }
             set { fixedPointOutlineWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
         public float FixedPointOutlineSpeed = 5f;
-        [SerializeField] private Color fixedPointOutlineColor = new Color(0, 0.8f, 1f, 1f);
-        public Color FixedPointOutlineColor
-        {
+        [SerializeField] private Color fixedPointOutlineColor = Color.white;
+        public Color FixedPointOutlineColor {
             get { return fixedPointOutlineColor; }
             set { fixedPointOutlineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdatePointVisuals); }
         }
@@ -153,140 +130,119 @@ namespace StatsMod
 
         public TMP_FontAsset GridTextFont = Assets.mainAssetBundle.LoadAsset<TMP_FontAsset>("LiberationSans SDF.asset");
         [SerializeField] private Vector2 gridSpacing = new Vector2(1, 1);
-        public Vector2 GridSpacing
-        {
+        public Vector2 GridSpacing {
             get { return gridSpacing; }
             set { gridSpacing = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [Space]
         [SerializeField] private float xAxisWidth = 3f;
-        public float XAxisWidth
-        {
+        public float XAxisWidth {
             get { return xAxisWidth; }
             set { xAxisWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
 
         [SerializeField] private Color xAxisColor = new Color(1f, 1f, 1f, 1f);
-        public Color XAxisColor
-        {
+        public Color XAxisColor {
             get { return xAxisColor; }
             set { xAxisColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [Space]
         [SerializeField] private Color xAxisTextColor = new Color(1f, 1f, 1f, 1f);
-        public Color XAxisTextColor
-        {
+        public Color XAxisTextColor {
             get { return xAxisTextColor; }
             set { xAxisTextColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [SerializeField] private float xAxisTextSize = 10f;
-        public float XAxisTextSize
-        {
+        public float XAxisTextSize {
             get { return xAxisTextSize; }
             set { xAxisTextSize = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [SerializeField] private float xAxisTextOffset = 10f;
-        public float XAxisTextOffset
-        {
+        public float XAxisTextOffset {
             get { return xAxisTextOffset; }
             set { xAxisTextOffset = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [Space]
         [SerializeField] private float yAxisWidth = 3f;
-        public float YAxisWidth
-        {
+        public float YAxisWidth {
             get { return yAxisWidth; }
             set { yAxisWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
 
         [SerializeField] private Color yAxisColor = new Color(1f, 1f, 1f, 1f);
-        public Color YAxisColor
-        {
+        public Color YAxisColor {
             get { return yAxisColor; }
             set { yAxisColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [Space]
         [SerializeField] private Color yAxisTextColor = new Color(1f, 1f, 1f, 1f);
-        public Color YAxisTextColor
-        {
+        public Color YAxisTextColor {
             get { return yAxisTextColor; }
             set { yAxisTextColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [SerializeField] private float yAxisTextSize = 10f;
-        public float YAxisTextSize
-        {
+        public float YAxisTextSize {
             get { return yAxisTextSize; }
             set { yAxisTextSize = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [SerializeField] private float yAxisTextOffset = 10f;
-        public float YAxisTextOffset
-        {
+        public float YAxisTextOffset {
             get { return yAxisTextOffset; }
             set { yAxisTextOffset = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [Space]
         [SerializeField] private float xGridWidth = 2f;
-        public float XGridWidth
-        {
+        public float XGridWidth {
             get { return xGridWidth; }
             set { xGridWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [SerializeField] private Color xGridColor = new Color(1f, 1f, 1f, 0.6f);
-        public Color XGridColor
-        {
+        public Color XGridColor {
             get { return xGridColor; }
             set { xGridColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
         [Space]
         [SerializeField] private float yGridWidth = 2f;
-        public float YGridWidth
-        {
+        public float YGridWidth {
             get { return yGridWidth; }
             set { yGridWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
 
         [SerializeField] private Color yGridColor = new Color(1f, 1f, 1f, 0.6f);
-        public Color YGridColor
-        {
+        public Color YGridColor {
             get { return yGridColor; }
             set { yGridColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateGridLines); }
         }
 
         [Space]
         [SerializeField] private Color zoomSelectionColor = new Color(0, 0.8f, 1f, 0.2f);
-        public Color ZoomSelectionColor
-        {
+        public Color ZoomSelectionColor {
             get { return zoomSelectionColor; }
             set { zoomSelectionColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.MouseAction); }
         }
         [SerializeField] private float zoomSelectionOutlineWidth = 5f;
-        public float ZoomSelectionOutlineWidth
-        {
+        public float ZoomSelectionOutlineWidth {
             get { return zoomSelectionOutlineWidth; }
             set { zoomSelectionOutlineWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.MouseAction); }
         }
         [SerializeField] private Color zoomSelectionOutlineColor = new Color(0, 0.8f, 1f, 0.6f);
-        public Color ZoomSelectionOutlineColor
-        {
+        public Color ZoomSelectionOutlineColor {
             get { return zoomSelectionOutlineColor; }
             set { zoomSelectionOutlineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.MouseAction); }
         }
         [Space]
         [SerializeField] private Color pointSelectionColor = new Color(1, 0.35f, 0f, 0.2f);
-        public Color PointSelectionColor
-        {
+        public Color PointSelectionColor {
             get { return pointSelectionColor; }
             set { pointSelectionColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.MouseAction); }
         }
         [SerializeField] private float pointSelectionOutlineWidth = 5f;
-        public float PointSelectionOutlineWidth
-        {
+        public float PointSelectionOutlineWidth {
             get { return pointSelectionOutlineWidth; }
             set { pointSelectionOutlineWidth = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.MouseAction); }
         }
         [SerializeField] private Color pointSelectionOutlineColor = new Color(1, 0.35f, 0f, 0.4f);
-        public Color PointSelectionOutlineColor
-        {
+        public Color PointSelectionOutlineColor {
             get { return pointSelectionOutlineColor; }
             set { pointSelectionOutlineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.MouseAction); }
         }
@@ -296,9 +252,42 @@ namespace StatsMod
         public float SmoothMoveSpeed = 20f;
 
         private GraphHandler GH;
-        private void Awake()
-        {
+        private void Awake() {
             GH = GetComponent<GraphHandler>();
+        }
+
+        public static Color Rainbow(float progress) {
+            float div = (Math.Abs(progress % 1) * 6);
+            int ascending = (int)((div % 1) * 255);
+            int descending = 255 - ascending;
+
+            System.Drawing.Color color;
+            switch ((int)div) {
+                case 0:
+                    color = System.Drawing.Color.FromArgb(255, 255, ascending, 0);
+                    break;
+                case 1:
+                    color = System.Drawing.Color.FromArgb(255, descending, 255, 0);
+                    break;
+                case 2:
+                    color = System.Drawing.Color.FromArgb(255, 0, 255, ascending);
+                    break;
+                case 3:
+                    color = System.Drawing.Color.FromArgb(255, 0, descending, 255);
+                    break;
+                case 4:
+                    color = System.Drawing.Color.FromArgb(255, ascending, 0, 255);
+                    break;
+                default:
+                    color = System.Drawing.Color.FromArgb(255, 255, 0, descending);
+                    break;
+            }
+            return new Color(
+                color.R / 255f,
+                color.G / 255f,
+                color.B / 255f,
+                color.A / 255f
+            );
         }
     }
 }

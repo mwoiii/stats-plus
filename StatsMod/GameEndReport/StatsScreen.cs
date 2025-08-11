@@ -1,15 +1,12 @@
-﻿using RoR2;
-using UnityEngine.Networking;
+﻿using LeTai.Asset.TranslucentImage;
+using RoR2;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using LeTai.Asset.TranslucentImage;
 using UnityEngine.UI;
 
-namespace StatsMod
-{
+namespace StatsMod {
     // base code shamelessly taken from restartbutton mod
-    public static class StatsScreen
-    {
+    public static class StatsScreen {
         public static RoR2.UI.HUD CurrentHud = null; // most recent hud object, for stats panel
 
         public static GameObject gameEndPrefab => Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/GameEndReportPanel.prefab").WaitForCompletion(); // prefab of the results screen, for grabbing copies of objects
@@ -20,15 +17,12 @@ namespace StatsMod
 
         public static RoR2.UI.MPButton continueButton; // continue button on report screen ^
 
-        public static GameObject graph; 
+        public static GameObject graph;
 
-        public static void CreateStatsWindow()
-        {
-            if (CurrentHud != null)
-            {
+        public static void CreateStatsWindow() {
+            if (CurrentHud != null) {
                 // preventing panel from fading in blur when stats window is closed
-                if (gameEndReportPanelController != null)
-                {
+                if (gameEndReportPanelController != null) {
                     gameEndReportPanelController.transform.Find("BlurPP").GetComponent<RoR2.PostProcessDuration>().maxDuration = 0;
                 }
 
@@ -75,143 +69,134 @@ namespace StatsMod
 
                 GameObject emptyContainer = content.Find("StatContainer").gameObject;
 
-                RoR2.UI.HGButton button;
+                foreach (string stat in PlayerStatsDatabase.allStats) {
+                    GameObject statContainer = Object.Instantiate(emptyContainer, content);
 
-                RoR2.UI.LanguageTextMeshController labelText;
-
-                Transform glyphTransform;
-
-                GameObject statContainer;
-
-                GameObject statsHeader;
-
-                foreach (string stat in PlayerStatsDatabase.allStats)
-                {
-                    statContainer = Object.Instantiate(emptyContainer, content);
-
-                    
-                    statsHeader = Object.Instantiate(gameEndPrefab.transform.Find("SafeArea (JUICED)/BodyArea/StatsAndChatArea/StatsContainer/Stats And Player Nav/Stats Header").gameObject, statContainer.transform.Find("TitleContainer"));
-                    labelText = statsHeader.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
-                    if (labelText)
-                    {
+                    GameObject statsHeader = Object.Instantiate(gameEndPrefab.transform.Find("SafeArea (JUICED)/BodyArea/StatsAndChatArea/StatsContainer/Stats And Player Nav/Stats Header").gameObject, statContainer.transform.Find("TitleContainer"));
+                    RoR2.UI.LanguageTextMeshController labelText = statsHeader.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
+                    if (labelText) {
                         labelText.token = $"<size=50px>{stat}";
                     }
-                    
-                    int index = 0;
-                    foreach (IndependentEntry i in RecordHandler.independentDatabase)
-                    {
-                        int currentIndex = index;
-                        GameObject statButton = Object.Instantiate(continueButton.gameObject, statContainer.transform);
-                        statButton.name = "StatButton";
-                        button = statButton.GetComponent<RoR2.UI.HGButton>();
-                        button.onClick.RemoveAllListeners();
-                        button.onClick.AddListener(() => {
-                            graph.GetComponent<GraphHandler>().PlotStat(stat, currentIndex);
-                        });
-                        labelText = statButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
-                        if (labelText)
-                        {
-                            labelText.token = $"Plot for {i.playerName}";
-                        }
-                        glyphTransform = statButton.transform.Find("GenericGlyph");
-                        if (glyphTransform)
-                        {
-                            glyphTransform.gameObject.SetActive(false);
-                        }
-                        index++;
-                    }
+
+                    // individual player buttons
+                    CreatePlayerPlotButtons(statContainer, labelText, stat);
+
                 }
+
                 Object.Destroy(emptyContainer);
 
 
                 // graph
-                if (graph != null)
-                {
+                if (graph != null) {
                     graph.transform.parent.gameObject.SetActive(true);
-                }
-                else
-                {
+                } else {
                     Log.Error("Graph window must be created first!");
                 }
 
                 // creation of the r script button
-                GameObject scriptButton = Object.Instantiate(continueButton.gameObject, panel.transform.Find("SafeArea (JUICED)/BodyArea/RightArea/AcceptButtonArea").transform);
-                scriptButton.name = "ScriptButton";
-                button = scriptButton.GetComponent<RoR2.UI.HGButton>();
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => {
-                    GUIUtility.systemCopyBuffer = RecordHandler.GetRScript();
-                });
-                labelText = scriptButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
-                if (labelText)
-                {
-                    labelText.token = "Copy R code";
-                }
-                glyphTransform = scriptButton.transform.Find("GenericGlyph");
-                if (glyphTransform)
-                {
-                    glyphTransform.gameObject.SetActive(false);
-                }
+                CreateRScriptButton(panel);
 
                 // creation of the close button
-                GameObject closeButton = Object.Instantiate(continueButton.gameObject, panel.transform.Find("SafeArea (JUICED)/BodyArea/RightArea/AcceptButtonArea").transform);
-                closeButton.name = "CloseButton";
-                button = closeButton.GetComponent<RoR2.UI.HGButton>();
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => {
-                    Object.Destroy(obj);
-                    graph.transform.parent.gameObject.SetActive(false);
-                });
-                labelText = closeButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
-                if (labelText)
-                {
-                    labelText.token = "Close";
-                }
-                glyphTransform = closeButton.transform.Find("GenericGlyph");
-                if (glyphTransform)
-                {
-                    glyphTransform.gameObject.SetActive(false);
-                }
+                CreateCloseButton(panel, obj);
 
-            }
-            else {
+            } else {
                 Log.Warning("CurrentHud is null!");
             }
         }
 
-        public static void CreateGraph()
-        {
+        public static void CreatePlayerPlotButtons(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat) {
+            int index = 0;
+            foreach (IndependentEntry entry in RecordHandler.independentDatabase) {
+                CreateStatPlotButton(statContainer, labelText, stat, index, entry.playerName);
+                index++;
+            }
+
+            // -1: special number for all players?
+            CreateStatPlotButton(statContainer, labelText, stat, -1, "all players");
+        }
+
+        private static void CreateRScriptButton(GameObject panel) {
+            GameObject scriptButton = Object.Instantiate(continueButton.gameObject, panel.transform.Find("SafeArea (JUICED)/BodyArea/RightArea/AcceptButtonArea").transform);
+            scriptButton.name = "ScriptButton";
+            RoR2.UI.HGButton button = scriptButton.GetComponent<RoR2.UI.HGButton>();
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => {
+                GUIUtility.systemCopyBuffer = RecordHandler.GetRScript();
+            });
+            RoR2.UI.LanguageTextMeshController labelText = scriptButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
+            if (labelText) {
+                labelText.token = "Copy R code";
+            }
+            Transform glyphTransform = scriptButton.transform.Find("GenericGlyph");
+            if (glyphTransform) {
+                glyphTransform.gameObject.SetActive(false);
+            }
+        }
+
+        private static void CreateCloseButton(GameObject panel, GameObject hud) {
+            GameObject closeButton = Object.Instantiate(continueButton.gameObject, panel.transform.Find("SafeArea (JUICED)/BodyArea/RightArea/AcceptButtonArea").transform);
+            closeButton.name = "CloseButton";
+            RoR2.UI.HGButton button = closeButton.GetComponent<RoR2.UI.HGButton>();
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => {
+                Object.Destroy(hud);
+                graph.transform.parent.gameObject.SetActive(false);
+            });
+            RoR2.UI.LanguageTextMeshController labelText = closeButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
+            if (labelText) {
+                labelText.token = "Close";
+            }
+            Transform glyphTransform = closeButton.transform.Find("GenericGlyph");
+            if (glyphTransform) {
+                glyphTransform.gameObject.SetActive(false);
+            }
+        }
+
+        private static void CreateStatPlotButton(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat, int statIndex, string plotForName) {
+            GameObject statButton = Object.Instantiate(continueButton.gameObject, statContainer.transform);
+            statButton.name = "StatButton";
+            RoR2.UI.HGButton button = statButton.GetComponent<RoR2.UI.HGButton>();
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => {
+                graph.GetComponent<GraphHandler>().PlotStat(stat, statIndex);
+            });
+            labelText = statButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
+            if (labelText) {
+                labelText.token = $"Plot for {plotForName}";
+            }
+            Transform glyphTransform = statButton.transform.Find("GenericGlyph");
+            if (glyphTransform) {
+                glyphTransform.gameObject.SetActive(false);
+            }
+        }
+
+        public static void CreateGraph() {
             // graph
             graph = new GameObject();
             graph.AddComponent<GraphHandler>();
             graph.AddComponent<GraphSettings>();
         }
 
-        private static void GameEndReportPanelController_Awake(On.RoR2.UI.GameEndReportPanelController.orig_Awake orig, RoR2.UI.GameEndReportPanelController self)
-        {
+        private static void GameEndReportPanelController_Awake(On.RoR2.UI.GameEndReportPanelController.orig_Awake orig, RoR2.UI.GameEndReportPanelController self) {
             orig(self);
             self.gameObject.AddComponent<StatsButtonController>();
         }
 
-        private static void GameEndReportPanelController_SetDisplayData(On.RoR2.UI.GameEndReportPanelController.orig_SetDisplayData orig, RoR2.UI.GameEndReportPanelController self, RoR2.UI.GameEndReportPanelController.DisplayData newDisplayData)
-        {
+        private static void GameEndReportPanelController_SetDisplayData(On.RoR2.UI.GameEndReportPanelController.orig_SetDisplayData orig, RoR2.UI.GameEndReportPanelController self, RoR2.UI.GameEndReportPanelController.DisplayData newDisplayData) {
             orig(self, newDisplayData);
 
-            if (self.TryGetComponent(out StatsButtonController graphScreenController))
-            {
+            if (self.TryGetComponent(out StatsButtonController graphScreenController)) {
                 graphScreenController.OnSetDisplayData(newDisplayData);
             }
         }
 
-        private static RoR2.UI.GameEndReportPanelController GetHud(On.RoR2.GameOverController.orig_GenerateReportScreen orig, RoR2.GameOverController self, RoR2.UI.HUD hud)
-        {
+        private static RoR2.UI.GameEndReportPanelController GetHud(On.RoR2.GameOverController.orig_GenerateReportScreen orig, RoR2.GameOverController self, RoR2.UI.HUD hud) {
             CurrentHud = hud;
             var gerpc = orig(self, hud);
             return gerpc;
         }
 
-        public static void Init()
-        {
+        public static void Init() {
             On.RoR2.UI.GameEndReportPanelController.Awake += GameEndReportPanelController_Awake;
             On.RoR2.UI.GameEndReportPanelController.SetDisplayData += GameEndReportPanelController_SetDisplayData;
             On.RoR2.GameOverController.GenerateReportScreen += GetHud;

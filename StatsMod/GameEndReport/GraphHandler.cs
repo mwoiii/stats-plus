@@ -1,81 +1,96 @@
 ﻿using System;
-using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using Unity.Mathematics;
+using System.Linq;
 using TMPro;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-namespace StatsMod
-{
-    public class GraphHandler : MonoBehaviour
-    {
+namespace StatsMod {
+    public class GraphHandler : MonoBehaviour {
         #region accessible methods
 
-        public void CreatePoint(Vector2 newValue)
-        {
-            CreatePointInternal(newValue);
+        public void CreatePoint(Vector2 newValue, bool shouldCreateLine = true) {
+            CreatePointInternal(newValue, shouldCreateLine);
         }
 
-        public void ChangePoint(int indexToChange, Vector2 newValue)
-        {
+        public void ChangePoint(int indexToChange, Vector2 newValue) {
             ChangePointInternal(indexToChange, newValue);
         }
 
-        public void SetCornerValues(Vector2 newBottomLeft, Vector2 newTopRight)
-        {
+        public void SetCornerValues(Vector2 newBottomLeft, Vector2 newTopRight) {
             SetCornerValuesInternal(newBottomLeft, newTopRight);
         }
 
-        public void UpdateGraph()
-        {
+        public void UpdateGraph() {
             UpdateGraphInternal(UpdateMethod.All);
         }
 
-        public void PlotStat(string statName, int index)
-        {
+        public void PlotStat(string statName, int index) {
             // something about there being points on the same y or x and y makes the graph very upset so we add a very small offset for new graphs
+            // ^ 1 year later what is he talking about
 
             ResetGraph();
             UpdateGraph();
 
-            List<object> timestamps = RecordHandler.independentDatabase[index].GetStatSeries("timestamps");
-
             Single smallestY = -5f;
             Single largestY = 5f;
 
-            List<object> stat = RecordHandler.independentDatabase[index].GetStatSeries(statName);
-            for (int i = 0; i < timestamps.Count; i++)
-            {
-                float x = Convert.ToSingle(timestamps[i]);
-                float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
-                CreatePoint(new Vector2(x, y));
-                if (y < smallestY)
-                {
-                    smallestY = y;
+            List<object> timestamps = RecordHandler.independentDatabase[0].GetStatSeries("timestamps");
+            if (index >= 0) {
+                Color playerColor = GraphSettings.Rainbow((float)index / (float)RecordHandler.independentDatabase.Count);
+                GS.LineColor = playerColor;
+                // case where plotting a specific player
+                List<object> stat = RecordHandler.independentDatabase[index].GetStatSeries(statName);
+                for (int i = 0; i < timestamps.Count; i++) {
+                    float x = Convert.ToSingle(timestamps[i]);
+                    float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    CreatePoint(new Vector2(x, y));
+                    if (y < smallestY) {
+                        smallestY = y;
+                    } else if (y > largestY) {
+                        largestY = y;
+                    }
                 }
-                else if (y > largestY)
-                {
-                    largestY = y;
+            } else if (index == -1) {
+                // case where plotting for all players
+                int playerIndex = 0;
+                foreach (IndependentEntry entry in RecordHandler.independentDatabase) {
+                    Color playerColor = GraphSettings.Rainbow((float)playerIndex / (float)RecordHandler.independentDatabase.Count);
+                    GS.LineColor = playerColor;
+                    List<object> stat = entry.GetStatSeries(statName);
+                    for (int i = 0; i < timestamps.Count; i++) {
+                        float x = Convert.ToSingle(timestamps[i]);
+                        float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                        if (i == 0) {
+                            GS.LineColor = Color.clear;
+                        }
+                        CreatePoint(new Vector2(x, y));
+                        GS.LineColor = playerColor;
+                        if (y < smallestY) {
+                            smallestY = y;
+                        } else if (y > largestY) {
+                            largestY = y;
+                        }
+                    }
+                    playerIndex++;
                 }
             }
-            
+
             float xOffset = Convert.ToSingle(timestamps[timestamps.Count - 1]) * 0.05f;
             float yOffset = math.max(math.abs(smallestY), math.abs(largestY)) * 0.05f;
 
-            SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count-1]) + xOffset, largestY + yOffset));
+            SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count - 1]) + xOffset, largestY + yOffset));
             UpdateGraph();
         }
 
-        private void ResetGraph()
-        {
+        private void ResetGraph() {
             Destroy(maskObj.gameObject);
             Destroy(outlineParent.gameObject);
             AwakeWOHook();
             Start();
-        } 
+        }
 
         #endregion
 
@@ -146,34 +161,29 @@ namespace StatsMod
         public Vector2 BottomLeft { get { return bottomLeft; } }
         public Vector2 TopRight { get { return topRight; } }
         public Vector2 Center { get { return center; } }
-        public enum MouseActionType
-        {
+        public enum MouseActionType {
             Move,
             SelectAreaToZoom,
             SelectPoints
         }
         public MouseActionType mouseActionType;
-        public enum RectangleType
-        {
+        public enum RectangleType {
             Free,
             PreserveAspectRatio,
             OriginalAspectRatio
         }
         public RectangleType rectangleType;
-        public enum RectangleSelectionType
-        {
+        public enum RectangleSelectionType {
             SelectAll,
             SelectUnselect
         }
         public RectangleSelectionType rectangleSelectionType;
-        public enum RectangleSelectionPhase
-        {
+        public enum RectangleSelectionPhase {
             Moving,
             Release
         }
         public RectangleSelectionPhase rectangleSelectionPhase;
-        public enum PointSelectionType
-        {
+        public enum PointSelectionType {
             Select,
             FixZoomPoint
         }
@@ -201,14 +211,12 @@ namespace StatsMod
         private float timeToUpdateScroll = 0;
         private bool error;
 
-        private void Awake()
-        {
+        private void Awake() {
             On.RoR2.SettingsConVars.ResolutionConVar.SetString += ResizeGraph;
             AwakeWOHook();
         }
 
-        private void AwakeWOHook()
-        {
+        private void AwakeWOHook() {
             values = new List<Vector2>();
             sortedIndices = new List<int>();
             points = new List<GameObject>();
@@ -245,11 +253,9 @@ namespace StatsMod
 
         #region private methods
 
-        private void ResizeGraph(On.RoR2.SettingsConVars.ResolutionConVar.orig_SetString orig, RoR2.ConVar.BaseConVar self, string newValue)
-        {
+        private void ResizeGraph(On.RoR2.SettingsConVars.ResolutionConVar.orig_SetString orig, RoR2.ConVar.BaseConVar self, string newValue) {
             orig(self, newValue);
-            if (graph != null)
-            {
+            if (graph != null) {
                 string[] array = newValue.Split('x');
                 var width = int.Parse(array[0]);
                 var height = int.Parse(array[1]);
@@ -259,21 +265,18 @@ namespace StatsMod
             }
         }
 
-        private void OnDestroy()
-        {
+        private void OnDestroy() {
             On.RoR2.SettingsConVars.ResolutionConVar.SetString -= ResizeGraph;
         }
 
-        private void Start()
-        {
+        private void Start() {
             if (CheckForErrors())
                 return;
             GS = GetComponent<GraphSettings>();
             PrepareGraph();
             //ExampleFunction();
         }
-        private void Update()
-        {
+        private void Update() {
             if (Input.GetKey(KeyCode.LeftShift))
                 mouseActionType = MouseActionType.SelectAreaToZoom;
             else if (Input.GetKey(KeyCode.LeftControl))
@@ -312,14 +315,12 @@ namespace StatsMod
             zoom = Vector2.Lerp(zoom, targetZoom, GS.SmoothZoomSpeed * Time.deltaTime);
             moveOffset = Vector2.Lerp(moveOffset, targetMoveOffset, GS.SmoothMoveSpeed * Time.deltaTime);
         }
-        private void PrepareGraph()
-        {
-            if (canvas == null)
-            {
+        private void PrepareGraph() {
+            if (canvas == null) {
                 canvas = new GameObject("GraphCanvas").AddComponent<Canvas>();
                 canvas.gameObject.SetActive(false);
             }
-            
+
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.gameObject.AddComponent<GraphicRaycaster>();
 
@@ -346,7 +347,7 @@ namespace StatsMod
             graphContent = new GameObject("GraphContent").AddComponent<RectTransform>();
             graphContent.SetParent(backgroundRect.transform);
             graphContent.sizeDelta = Vector2.zero;
-            
+
 
             /*
             graph = gameObject.GetComponent<RectTransform>();
@@ -370,8 +371,7 @@ namespace StatsMod
             UpdateGraphInternal(UpdateMethod.All);
         }
 
-        private GameObject CreateParent(string name)
-        {
+        private GameObject CreateParent(string name) {
             GameObject parent = new GameObject(name);
             parent.transform.SetParent(name == "OutlineParent" ? graph : graphContent);
             Image image = parent.AddComponent<Image>();
@@ -381,10 +381,8 @@ namespace StatsMod
             return parent;
         }
 
-        private void CreateOutlines()
-        {
-            for (int i = 0; i < 4; i++)
-            {
+        private void CreateOutlines() {
+            for (int i = 0; i < 4; i++) {
                 Image outlineImage = new GameObject("Outline").AddComponent<Image>();
                 RectTransform outline = outlineImage.GetComponent<RectTransform>();
                 outline.SetParent(outlineParent.transform);
@@ -395,8 +393,7 @@ namespace StatsMod
             }
         }
 
-        private void CreatePointInternal(Vector2 value)
-        {
+        private void CreatePointInternal(Vector2 value, bool shouldCreateLine = true) {
 
             int i = points.Count;
             GameObject outline = CreatePointOutline(i);
@@ -422,14 +419,13 @@ namespace StatsMod
             new { Type = EventTriggerType.PointerExit, Callback = (Action) (() => MouseTrigger(i, false)) },
             new { Type = EventTriggerType.PointerClick, Callback = (Action) (() => PointClicked(i)) }
         };
-            foreach (var eventType in eventTypes)
-            {
+            foreach (var eventType in eventTypes) {
                 EventTrigger.Entry entry = new EventTrigger.Entry { eventID = eventType.Type };
                 entry.callback.AddListener((data) => { eventType.Callback(); });
                 trigger.triggers.Add(entry);
             }
-            if (points.Count > 1)
-            {
+            // Log.Info($"My point is {value.x}, {value.y}. Should I create a line? {shouldCreateLine}");
+            if (points.Count > 1 && shouldCreateLine) {
                 GameObject line = new GameObject("Line");
                 line.transform.SetParent(lineParent.transform);
                 lineImages.Add(line.AddComponent<Image>());
@@ -445,14 +441,12 @@ namespace StatsMod
                 outline.SetActive(false);
         }
 
-        private void ChangePointInternal(int index, Vector2 newValue)
-        {
+        private void ChangePointInternal(int index, Vector2 newValue) {
             values[index] = newValue;
             SortIndices();
         }
 
-        private void SortIndices()
-        {
+        private void SortIndices() {
             sortedIndices = values.Select((vector, index) => new { vector, index })
                 .OrderBy(item => item.vector.x)
                 .ThenBy(item => item.vector.y)
@@ -461,13 +455,11 @@ namespace StatsMod
         }
 
 
-        private GameObject CreatePointOutline(int i)
-        {
+        private GameObject CreatePointOutline(int i) {
             GameObject outline = new GameObject("PointOutline" + i);
             pointOutlines.Add(outline);
 
-            if (pointParent != null)
-            {
+            if (pointParent != null) {
                 outline.transform.SetParent(pointParent.transform);
             }
 
@@ -484,18 +476,15 @@ namespace StatsMod
             return outline;
         }
 
-        private void CreateGridLines(bool createX)
-        {
-            if (createX)
-            {
+        private void CreateGridLines(bool createX) {
+            if (createX) {
                 GameObject xGrid = new GameObject("xGrid" + xGridRects.Count);
                 xGrid.transform.SetParent(gridParent.transform);
                 Image xGridImage = xGrid.AddComponent<Image>();
                 xGridImage.raycastTarget = false;
                 xGridRects.Add(xGrid.GetComponent<RectTransform>());
                 xGridImages.Add(xGridImage);
-                if (xGridRects.Count > 1)
-                {
+                if (xGridRects.Count > 1) {
                     TextMeshProUGUI xText = new GameObject("xText" + xGridRects.Count).AddComponent<TextMeshProUGUI>();
                     RectTransform textRect = xText.gameObject.GetComponent<RectTransform>();
                     textRect.SetParent(xGrid.GetComponent<RectTransform>());
@@ -511,17 +500,14 @@ namespace StatsMod
                     xAxisTexts.Add(xText);
                     xAxisTextRects.Add(textRect);
                 }
-            }
-            else
-            {
+            } else {
                 GameObject yGrid = new GameObject("yGrid" + yGridRects.Count);
                 yGrid.transform.SetParent(gridParent.transform);
                 Image yGridImage = yGrid.AddComponent<Image>();
                 yGridImage.raycastTarget = false;
                 yGridRects.Add(yGrid.GetComponent<RectTransform>());
                 yGridImages.Add(yGridImage);
-                if (yGridRects.Count > 1)
-                {
+                if (yGridRects.Count > 1) {
                     TextMeshProUGUI yText = new GameObject("yText" + yGridRects.Count).AddComponent<TextMeshProUGUI>();
                     RectTransform textRect = yText.gameObject.GetComponent<RectTransform>();
                     textRect.SetParent(yGrid.GetComponent<RectTransform>());
@@ -540,16 +526,14 @@ namespace StatsMod
             }
         }
 
-        private void CreateselectionTypes()
-        {
+        private void CreateselectionTypes() {
             GameObject selectionParent = new GameObject("SelectionParent");
             selectionParent.transform.SetParent(graphContent);
             selectionParent.AddComponent<RectTransform>().anchoredPosition = new Vector2(0f, 0f);
             zoomSelectionImage = new GameObject("ZoomSelection").AddComponent<Image>();
             zoomSelectionRectTransform = zoomSelectionImage.GetComponent<RectTransform>();
             zoomSelectionRectTransform.SetParent(selectionParent.transform);
-            for (int i = 0; i < 4; i++)
-            {
+            for (int i = 0; i < 4; i++) {
                 Image image = new GameObject("Outline").AddComponent<Image>();
                 RectTransform rect = image.GetComponent<RectTransform>();
                 rect.SetParent(zoomSelectionRectTransform);
@@ -560,8 +544,7 @@ namespace StatsMod
             pointSelectionImage = new GameObject("PointSelection").AddComponent<Image>();
             pointSelectionRectTransform = pointSelectionImage.GetComponent<RectTransform>();
             pointSelectionRectTransform.SetParent(selectionParent.transform);
-            for (int i = 0; i < 4; i++)
-            {
+            for (int i = 0; i < 4; i++) {
                 Image image = new GameObject("Outline").AddComponent<Image>();
                 RectTransform rect = image.GetComponent<RectTransform>();
                 rect.SetParent(pointSelectionRectTransform);
@@ -571,22 +554,17 @@ namespace StatsMod
             pointSelectionRectTransform.gameObject.SetActive(false);
         }
 
-        private void CheckIfUpdateGraph()
-        {
+        private void CheckIfUpdateGraph() {
             CalculateMousePosition();
-            if (mouseInsideBounds)
-            {
-                if (Input.GetMouseButtonDown(0) || Input.GetMouseButton(0) || Input.GetMouseButtonUp(0))
-                {
+            if (mouseInsideBounds) {
+                if (Input.GetMouseButtonDown(0) || Input.GetMouseButton(0) || Input.GetMouseButtonUp(0)) {
                     timeToUpdateMouse = GS.updatePeriod;
                 }
-                if (Input.touchCount > 0)
-                {
+                if (Input.touchCount > 0) {
                     timeToUpdateTouch = GS.updatePeriod;
 
                 }
-                if (Input.mouseScrollDelta.y != 0)
-                {
+                if (Input.mouseScrollDelta.y != 0) {
                     timeToUpdateScroll = GS.updatePeriod;
                 }
             }
@@ -600,8 +578,7 @@ namespace StatsMod
             timeToUpdateTouch -= Time.deltaTime;
             timeToUpdateScroll -= Time.deltaTime;
         }
-        public void UpdateGraphInternal(UpdateMethod methodsToUpdate)
-        {
+        public void UpdateGraphInternal(UpdateMethod methodsToUpdate) {
             if (methodsToUpdate.HasFlag(UpdateMethod.UpdatePositionAndScale) || methodsToUpdate.HasFlag(UpdateMethod.All))
                 UpdatePositionAndScale();
             CalculateCornerValues();
@@ -621,8 +598,7 @@ namespace StatsMod
             if (methodsToUpdate.HasFlag(UpdateMethod.UpdateGridLines) || methodsToUpdate.HasFlag(UpdateMethod.All))
                 UpdateGridLines();
         }
-        private void UpdatePositionAndScale()
-        {
+        private void UpdatePositionAndScale() {
             contentScale = GS.GraphScale * zoom;
             maskObj.sizeDelta = GS.GraphSize;
             contentOffset = absoluteZoomPoint - zoomPoint * contentScale - moveOffset;
@@ -631,37 +607,32 @@ namespace StatsMod
             backgroundRect.sizeDelta = GS.GraphSize;
             backgroundImage.color = GS.BackgroundColor;
         }
-        private void UpdateOutlines()
-        {
-            for (int i = 0; i < outlines.Count; i++)
-            {
+        private void UpdateOutlines() {
+            for (int i = 0; i < outlines.Count; i++) {
                 if (i % 2 == 0) // Left and Right outlines
                 {
                     outlines[i].sizeDelta = new Vector2(GS.OutlineWidth, GS.GraphSize.y + GS.OutlineWidth * 2);
                     outlines[i].anchoredPosition = new Vector2((i == 0 ? -1 : 1) * (GS.GraphSize.x + GS.OutlineWidth) / 2, 0);
-                }
-                else // Top and Bottom outlines
-                {
+                } else // Top and Bottom outlines
+                  {
                     outlines[i].sizeDelta = new Vector2(GS.GraphSize.x + GS.OutlineWidth * 2, GS.OutlineWidth);
                     outlines[i].anchoredPosition = new Vector2(0, (i == 1 ? -1 : 1) * (GS.GraphSize.y + GS.OutlineWidth) / 2);
                 }
-                outlineImages[i].color = GS.OutlineColor;
+                // stop!!!! stop I say!!!!!!!!!!!!
+                // outlineImages[i].color = GS.OutlineColor;
             }
         }
-        private void CalculateCornerValues()
-        {
+        private void CalculateCornerValues() {
             topRight = new Vector2(Mathf.Clamp(topRight.x, bottomLeft.x, Mathf.Infinity), Mathf.Clamp(topRight.y, bottomLeft.y, Mathf.Infinity));
             bottomLeft = -contentOffset / contentScale;
             topRight = bottomLeft + GS.GraphSize / contentScale;
             center = (topRight - bottomLeft) / 2f + bottomLeft;
         }
-        private void UpdateContent()
-        {
+        private void UpdateContent() {
             if (xAxisRange.x == -1 || xAxisRange.y == -1)
                 return;
             Vector2 bounds = new Vector2(bottomLeft.y, topRight.y);
-            for (int i = xAxisRange.x - 1; i <= xAxisRange.y + 1; i++)
-            {
+            for (int i = xAxisRange.x - 1; i <= xAxisRange.y + 1; i++) {
                 if (i < 0 || i > sortedIndices.Count - 1)
                     continue;
                 int index = sortedIndices[i];
@@ -670,13 +641,11 @@ namespace StatsMod
                 float nextValue = values[Mathf.Clamp(index + 1, 0, values.Count - 1)].y;
 
                 if ((currentValue < bounds.x && prevValue < bounds.x && nextValue < bounds.x) ||
-                    (currentValue > bounds.y && prevValue > bounds.y && nextValue > bounds.y))
-                {
+                    (currentValue > bounds.y && prevValue > bounds.y && nextValue > bounds.y)) {
                     continue;
                 }
                 UpdateAnchoredPosition(pointOutlineRects[index], CalculatePosition(i));
-                if (lines.Count > 0 && index < lines.Count)
-                {
+                if (lines.Count > 0 && index < lines.Count) {
                     Vector2 point1 = CalculatePosition(index);
                     Vector2 point2 = CalculatePosition(index + 1);
                     float distance = Vector2.Distance(point1, point2);
@@ -686,85 +655,73 @@ namespace StatsMod
                     float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                     lineRects[index].rotation = Quaternion.AngleAxis(angle, Vector3.forward);
 
-                    lineImages[index].color = GS.LineColor;
+                    // don't do this!! I don't want it!!!
+                    // lineImages[index].color = GS.LineColor;
                 }
             }
         }
-        private void HandleActiveObjects()
-        {
-            if (prevXAxisRange.x < xAxisRange.x)
-            {
-                for (int i = prevXAxisRange.x - 1; i < xAxisRange.x - 1; i++)
-                {
-                    if (i < 0)
-                        continue;
-                    pointOutlines[sortedIndices[i]].SetActive(false);
-                    if (i < lines.Count)
-                        lines[sortedIndices[i]].SetActive(false);
+        private void HandleActiveObjects() {
+            try {
+                if (prevXAxisRange.x < xAxisRange.x) {
+                    for (int i = prevXAxisRange.x - 1; i < xAxisRange.x - 1; i++) {
+                        if (i < 0)
+                            continue;
+                        pointOutlines[sortedIndices[i]].SetActive(false);
+                        if (i < lines.Count)
+                            lines[sortedIndices[i]].SetActive(false);
+                    }
+                } else if (prevXAxisRange.x > xAxisRange.x && xAxisRange.x >= 0) {
+                    for (int i = xAxisRange.x - 1; i < prevXAxisRange.x; i++) {
+                        if (i < 0)
+                            continue;
+                        pointOutlines[sortedIndices[i]].SetActive(true);
+                        if (i < lines.Count)
+                            lines[sortedIndices[i]].SetActive(true);
+                    }
                 }
-            }
-            else if (prevXAxisRange.x > xAxisRange.x && xAxisRange.x >= 0)
-            {
-                for (int i = xAxisRange.x - 1; i < prevXAxisRange.x; i++)
-                {
-                    if (i < 0)
-                        continue;
-                    pointOutlines[sortedIndices[i]].SetActive(true);
-                    if (i < lines.Count)
-                        lines[sortedIndices[i]].SetActive(true);
+                if (prevXAxisRange.y > xAxisRange.y) {
+                    for (int i = xAxisRange.y + 2; i <= prevXAxisRange.y + 2; i++) {
+                        if (i > pointOutlines.Count - 1 || i < 0)
+                            continue;
+                        pointOutlines[sortedIndices[i]].SetActive(false);
+                        if (i < lines.Count)
+                            lines[sortedIndices[i]].SetActive(false);
+                    }
+                } else if (xAxisRange.y > prevXAxisRange.y) {
+                    for (int i = prevXAxisRange.y + 2; i <= xAxisRange.y + 1; i++) {
+                        if (i > pointOutlines.Count - 1 || i < 0)
+                            continue;
+                        pointOutlines[sortedIndices[i]].SetActive(true);
+                        if (i < lines.Count)
+                            lines[sortedIndices[i]].SetActive(true);
+                    }
                 }
+            } catch (ArgumentOutOfRangeException e) {
+                // metaphysical duct tape
             }
-            if (prevXAxisRange.y > xAxisRange.y)
-            {
-                for (int i = xAxisRange.y + 2; i <= prevXAxisRange.y + 2; i++)
-                {
-                    if (i > pointOutlines.Count - 1 || i < 0)
-                        continue;
-                    pointOutlines[sortedIndices[i]].SetActive(false);
-                    if (i < lines.Count)
-                        lines[sortedIndices[i]].SetActive(false);
-                }
-            }
-            else if (xAxisRange.y > prevXAxisRange.y)
-            {
-                for (int i = prevXAxisRange.y + 2; i <= xAxisRange.y + 1; i++)
-                {
-                    if (i > pointOutlines.Count - 1 || i < 0)
-                        continue;
-                    pointOutlines[sortedIndices[i]].SetActive(true);
-                    if (i < lines.Count)
-                        lines[sortedIndices[i]].SetActive(true);
-                }
-            }
+
             prevXAxisRange = xAxisRange;
             xAxisRange = new Vector2Int(MinMaxBinarySearch(true), MinMaxBinarySearch(false));
         }
-        private Vector2 CalculatePosition(int i)
-        {
+        private Vector2 CalculatePosition(int i) {
             return values[i] * contentScale;
         }
-        private void MouseTrigger(int pointIndex, bool enter)
-        {
+        private void MouseTrigger(int pointIndex, bool enter) {
             fixedHoveredPoints.Add(pointIndex);
             fixedHoveredPoints = fixedHoveredPoints.Distinct().ToList();
 
-            if (enter)
-            {
+            if (enter) {
                 activePointIndex = pointIndex;
                 activePointValue = values[pointIndex];
                 pointIsActive = enter;
 
-                if (pointSelectionType == PointSelectionType.Select)
-                {
+                if (pointSelectionType == PointSelectionType.Select) {
                     lockedHoveredPoints.Add(pointIndex);
                     lockedHoveredPoints = lockedHoveredPoints.Distinct().ToList();
                 }
-            }
-            else
-            {
+            } else {
                 // Do not process PointerExit event for locked points
-                if (lockedPoints.Contains(activePointIndex) && pointSelectionType == PointSelectionType.Select || fixedPointIndex == activePointIndex && pointSelectionType == PointSelectionType.FixZoomPoint)
-                {
+                if (lockedPoints.Contains(activePointIndex) && pointSelectionType == PointSelectionType.Select || fixedPointIndex == activePointIndex && pointSelectionType == PointSelectionType.FixZoomPoint) {
                     return;
                 }
 
@@ -773,12 +730,9 @@ namespace StatsMod
                 pointIsActive = enter;
             }
         }
-        private void PointClicked(int pointIndex)
-        {
-            if (pointSelectionType == PointSelectionType.FixZoomPoint)
-            {
-                if (fixedPointIndex != -1)
-                {
+        private void PointClicked(int pointIndex) {
+            if (pointSelectionType == PointSelectionType.FixZoomPoint) {
+                if (fixedPointIndex != -1) {
                     ChangeZoomPoint(values[pointIndex]);
                     fixedHoveredPoints.Add(fixedPointIndex);
                 }
@@ -787,100 +741,78 @@ namespace StatsMod
 
                 fixedPointIndex = (fixedPointIndex == pointIndex) ? -1 : pointIndex;
                 ChangeZoomPoint((fixedPointIndex == -1) ? center : values[pointIndex]);
-            }
-            else
-            {
-                if (lockedPoints.Contains(pointIndex))
-                {
+            } else {
+                if (lockedPoints.Contains(pointIndex)) {
                     lockedPoints.Remove(pointIndex);
-                }
-                else
-                {
+                } else {
                     lockedPoints.Add(pointIndex);
                 }
             }
         }
-        private void UpdatePointVisuals()
-        {
+        private void UpdatePointVisuals() {
             if (xAxisRange.x == -1 || xAxisRange.y == -1)
                 return;
-            for (int i = xAxisRange.x; i <= xAxisRange.y; i++)
-            {
+            for (int i = xAxisRange.x; i <= xAxisRange.y; i++) {
                 if (activePointIndex == sortedIndices[i])
                     continue;
                 lockedHoveredPoints.Add(sortedIndices[i]);
                 fixedHoveredPoints.Add(sortedIndices[i]);
             }
         }
-        private void UpdatePoints()
-        {
-            for (int i = 0; i < lockedHoveredPoints.Count; i++)
-            {
+        private void UpdatePoints() {
+            for (int i = 0; i < lockedHoveredPoints.Count; i++) {
                 Vector2 targetSize;
                 Color targetColor;
                 float targetSpeed;
                 int numToUpdate = lockedHoveredPoints[i];
                 bool isActive = activePointIndex == numToUpdate && pointIsActive;
 
-                if (lockedPoints.Contains(numToUpdate))
-                {
+                if (lockedPoints.Contains(numToUpdate)) {
                     targetSize = Vector2.one * GS.PointLockedRadius;
                     targetColor = GS.PointLockedColor;
                     targetSpeed = GS.PointLockedSpeed;
-                }
-                else if (isActive && pointSelectionType == PointSelectionType.Select)
-                {
+                } else if (isActive && pointSelectionType == PointSelectionType.Select) {
                     targetSize = Vector2.one * GS.PointHoverRadius;
                     targetColor = GS.PointHoverColor;
                     targetSpeed = GS.PointHoverSpeed;
-                }
-                else
-                {
+                } else {
                     targetSize = Vector2.one * GS.PointRadius;
                     targetColor = GS.PointColor;
                     targetSpeed = GS.PointHoverSpeed;
                 }
 
                 pointRects[numToUpdate].sizeDelta = Vector2.Lerp(pointRects[numToUpdate].sizeDelta, targetSize, Time.deltaTime * targetSpeed);
-                pointImages[numToUpdate].color = Color.Lerp(pointImages[numToUpdate].color, targetColor, Time.deltaTime * targetSpeed);
 
-                if (!isActive && Vector2.Distance(pointRects[numToUpdate].sizeDelta, targetSize) < 0.5f && Vector4.Distance(pointImages[numToUpdate].color, targetColor) < 0.5f)
-                {
+                // stop!!! don't change it!!! ever
+                // pointImages[numToUpdate].color = Color.Lerp(pointImages[numToUpdate].color, targetColor, Time.deltaTime * targetSpeed);
+
+                if (!isActive && Vector2.Distance(pointRects[numToUpdate].sizeDelta, targetSize) < 0.5f && Vector4.Distance(pointImages[numToUpdate].color, targetColor) < 0.5f) {
                     pointImages[numToUpdate].color = targetColor;
                     pointRects[numToUpdate].sizeDelta = targetSize;
                     lockedHoveredPoints.RemoveAt(i);
-                }
-                else if (!fixedHoveredPoints.Contains(numToUpdate) && numToUpdate != fixedPointIndex)
-                {
+                } else if (!fixedHoveredPoints.Contains(numToUpdate) && numToUpdate != fixedPointIndex) {
                     pointOutlineRects[numToUpdate].sizeDelta = pointRects[numToUpdate].sizeDelta + Vector2.one * GS.UnfixedPointOutlineWidth;
                 }
             }
             UpdatePointOutlines();
         }
-        private void UpdatePointOutlines()
-        {
-            for (int i = 0; i < fixedHoveredPoints.Count; i++)
-            {
+        private void UpdatePointOutlines() {
+            for (int i = 0; i < fixedHoveredPoints.Count; i++) {
                 Vector2 targetSize;
                 Color targetColor;
                 float targetSpeed;
                 int numToUpdate = fixedHoveredPoints[i];
                 bool isActive = activePointIndex == numToUpdate && pointIsActive;
 
-                if (fixedPointIndex == numToUpdate)
-                {
+                if (fixedPointIndex == numToUpdate) {
                     targetSize = new Vector2(GS.FixedPointOutlineWidth, GS.FixedPointOutlineWidth);
                     targetColor = GS.FixedPointOutlineColor;
                     targetSpeed = GS.FixedPointOutlineSpeed;
-                }
-                else if (isActive && pointSelectionType == PointSelectionType.FixZoomPoint)
-                {
+                } else if (isActive && pointSelectionType == PointSelectionType.FixZoomPoint) {
                     targetSize = new Vector2(GS.UnfixedPointOutlineHoverWidth, GS.UnfixedPointOutlineHoverWidth);
                     targetColor = GS.UnfixedPointOutlineHoverColor;
                     targetSpeed = GS.UnfixedPointOutlineHoverSpeed;
-                }
-                else
-                {
+                } else {
                     targetSize = new Vector2(GS.UnfixedPointOutlineWidth, GS.UnfixedPointOutlineWidth);
                     targetColor = GS.UnfixedPointOutlineColor;
                     targetSpeed = GS.UnfixedPointOutlineHoverSpeed;
@@ -903,37 +835,30 @@ namespace StatsMod
             }
         }
 
-        private void UpdateGridLines()
-        {
+        private void UpdateGridLines() {
             Vector2 GridStartPoint;
             Vector2 spacing = CalculateGridSpacing();
             GridStartPoint = new Vector2(Mathf.Ceil(bottomLeft.x * spacing.x) / spacing.x, Mathf.Ceil(bottomLeft.y * spacing.y) / spacing.y) * contentScale;
             int2 eventualOverlay = new int2(-1, -1);
             int requiredYGridlines = Mathf.CeilToInt((topRight.y - bottomLeft.y) * spacing.y) + 1;
             int requiredXGridlines = Mathf.CeilToInt((topRight.x - bottomLeft.x) * spacing.x) + 1;
-            while (xGridRects.Count <= requiredXGridlines)
-            {
+            while (xGridRects.Count <= requiredXGridlines) {
                 CreateGridLines(true);
             }
-            while (yGridRects.Count <= requiredYGridlines)
-            {
+            while (yGridRects.Count <= requiredYGridlines) {
                 CreateGridLines(false);
             }
 
-            for (int i = 0; i < requiredXGridlines; i++)
-            {
+            for (int i = 0; i < requiredXGridlines; i++) {
                 RectTransform rect = xGridRects[i];
                 Image rectImage = xGridImages[i];
                 if (!rect.gameObject.activeSelf)
                     rect.gameObject.SetActive(true);
-                if (i == 0)
-                {
+                if (i == 0) {
                     UpdateSizeDelta(rect, new Vector2(GS.XAxisWidth, GS.GraphSize.y * 2f));
                     rectImage.color = GS.XAxisColor;
                     UpdateAnchoredPosition(rect, new Vector2(0, center.y * contentScale.y));
-                }
-                else
-                {
+                } else {
                     UpdateSizeDelta(rect, new Vector2(GS.XGridWidth, GS.GraphSize.y * 2f));
                     rectImage.color = GS.XGridColor;
 
@@ -947,20 +872,16 @@ namespace StatsMod
                 }
             }
 
-            for (int i = 0; i < requiredYGridlines; i++)
-            {
+            for (int i = 0; i < requiredYGridlines; i++) {
                 RectTransform rect = yGridRects[i];
                 Image rectImage = yGridImages[i];
                 if (!rect.gameObject.activeSelf)
                     rect.gameObject.SetActive(true);
-                if (i == 0)
-                {
+                if (i == 0) {
                     UpdateSizeDelta(rect, new Vector2(GS.GraphSize.x * 2f, GS.YAxisWidth));
                     rectImage.color = GS.YAxisColor;
                     UpdateAnchoredPosition(rect, new Vector2(center.x * contentScale.x, 0));
-                }
-                else
-                {
+                } else {
                     UpdateSizeDelta(rect, new Vector2(GS.GraphSize.x * 2f, GS.YGridWidth));
                     rectImage.color = GS.YGridColor;
 
@@ -973,41 +894,35 @@ namespace StatsMod
                     yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.RoundToInt(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
                 }
             }
-            for (int i = requiredXGridlines; i < xGridRects.Count; i++)
-            {
+            for (int i = requiredXGridlines; i < xGridRects.Count; i++) {
                 if (xGridRects[i].gameObject.activeSelf)
                     xGridRects[i].gameObject.SetActive(false);
             }
-            for (int i = requiredYGridlines; i < yGridRects.Count; i++)
-            {
+            for (int i = requiredYGridlines; i < yGridRects.Count; i++) {
                 if (yGridRects[i].gameObject.activeSelf)
                     yGridRects[i].gameObject.SetActive(false);
             }
         }
-        private Vector2 CalculateGridSpacing()
-        {
+        private Vector2 CalculateGridSpacing() {
             int exponentX = Mathf.FloorToInt(Mathf.Log(zoom.x, 2));
             int exponentY = Mathf.FloorToInt(Mathf.Log(zoom.y, 2));
             float closestX = Mathf.Pow(2, exponentX);
             float closestY = Mathf.Pow(2, exponentY);
             return new Vector2(closestX, closestY) * GS.GridSpacing;
         }
-        private void SetCornerValuesInternal(Vector2 newBottomLeft, Vector2 newTopRight)
-        {
+        private void SetCornerValuesInternal(Vector2 newBottomLeft, Vector2 newTopRight) {
             Vector2 newCenter = (newTopRight - newBottomLeft) / 2f + newBottomLeft;
             targetMoveOffset = (newCenter - center) * contentScale + moveOffset;
 
             ChangeZoomPoint(newCenter);
             targetZoom = GS.GraphSize / GS.GraphScale / (newTopRight - newBottomLeft);
         }
-        private void CalculateMousePosition()
-        {
+        private void CalculateMousePosition() {
             mousePos = (new Vector2(Input.mousePosition.x, Input.mousePosition.y) - new Vector2(graphContent.transform.position.x, graphContent.transform.position.y)) / contentScale;
             mouseInsideBounds = mousePos.x > bottomLeft.x && mousePos.y > bottomLeft.y && mousePos.x < topRight.x && mousePos.y < topRight.y;
             mousePos = new Vector2(Mathf.Clamp(mousePos.x, bottomLeft.x, topRight.x), Mathf.Clamp(mousePos.y, bottomLeft.y, topRight.y));
         }
-        private void MouseZoom()
-        {
+        private void MouseZoom() {
             if (!mouseInsideBounds)
                 return;
             if (Input.mouseScrollDelta.y == 0)
@@ -1016,16 +931,13 @@ namespace StatsMod
                 ChangeZoomPoint(mousePos);
             targetZoom = zoom + Input.mouseScrollDelta.y * zoom * GS.ZoomSpeed / 100f;
         }
-        private void ChangeZoomPoint(Vector2 newZoomPoint)
-        {
+        private void ChangeZoomPoint(Vector2 newZoomPoint) {
             absoluteZoomPoint = (newZoomPoint - zoomPoint) * contentScale + absoluteZoomPoint;
             zoomPoint = newZoomPoint;
         }
 
-        private void MouseAction()
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
+        private void MouseAction() {
+            if (Input.GetMouseButtonDown(0)) {
                 initialMouseInsideBounds = mouseInsideBounds;
                 if (!mouseInsideBounds)
                     return;
@@ -1033,44 +945,35 @@ namespace StatsMod
                 initialMousePos = Input.mousePosition;
                 if (mouseActionType == MouseActionType.Move)
                     initialMoveOffset = moveOffset;
-                else if (mouseActionType == MouseActionType.SelectPoints)
-                {
+                else if (mouseActionType == MouseActionType.SelectPoints) {
                     initialLockedPoints.Clear();
                     for (int i = 0; i < lockedPoints.Count; i++)
                         initialLockedPoints.Add(lockedPoints[i]);
                 }
                 return;
             }
-            if (Input.GetMouseButton(0) && initialMouseInsideBounds)
-            {
-                if (Input.GetMouseButtonDown(1))
-                {
+            if (Input.GetMouseButton(0) && initialMouseInsideBounds) {
+                if (Input.GetMouseButtonDown(1)) {
                     initialMouseInsideBounds = false;
                     zoomSelectionRectTransform.gameObject.SetActive(false);
                     pointSelectionRectTransform.gameObject.SetActive(false);
                 }
-                if (previousMousePos != mousePos)
-                {
+                if (previousMousePos != mousePos) {
                     Vector2 currentMousePos = Input.mousePosition;
                     if (mouseActionType == MouseActionType.Move)
                         targetMoveOffset = (initialMousePos - currentMousePos) + initialMoveOffset;
-                    else if (mouseActionType == MouseActionType.SelectAreaToZoom)
-                    {
+                    else if (mouseActionType == MouseActionType.SelectAreaToZoom) {
                         if (!zoomSelectionRectTransform.gameObject.activeSelf)
                             zoomSelectionRectTransform.gameObject.SetActive(true);
                         SelectAreaToZoom(false);
-                    }
-                    else if (mouseActionType == MouseActionType.SelectPoints)
-                    {
+                    } else if (mouseActionType == MouseActionType.SelectPoints) {
                         if (!pointSelectionRectTransform.gameObject.activeSelf)
                             pointSelectionRectTransform.gameObject.SetActive(true);
                         SelectPoints(false);
                     }
                 }
                 previousMousePos = mousePos;
-            }
-            else if (Input.GetMouseButtonUp(0) && initialMouseInsideBounds)
-            {
+            } else if (Input.GetMouseButtonUp(0) && initialMouseInsideBounds) {
                 if (mouseActionType == MouseActionType.SelectAreaToZoom)
                     SelectAreaToZoom(true);
                 else if (mouseActionType == MouseActionType.SelectPoints)
@@ -1078,46 +981,34 @@ namespace StatsMod
                 recentlyLockedPoints.Clear();
             }
 
-            if (Input.touchCount == 1)
-            {
+            if (Input.touchCount == 1) {
                 Touch touch = Input.GetTouch(0);
-                if (touch.phase == TouchPhase.Began)
-                {
+                if (touch.phase == TouchPhase.Began) {
                     initialMousePos = touch.position;
                     mousePos = (new Vector2(touch.position.x, touch.position.y) - new Vector2(graphContent.transform.position.x, graphContent.transform.position.y)) / contentScale;
                     initialMouseInsideBounds = mousePos.x > bottomLeft.x && mousePos.y > bottomLeft.y && mousePos.x < topRight.x && mousePos.y < topRight.y;
                     if (mouseActionType == MouseActionType.Move)
                         initialMoveOffset = moveOffset;
-                    else if (mouseActionType == MouseActionType.SelectPoints)
-                    {
+                    else if (mouseActionType == MouseActionType.SelectPoints) {
                         initialLockedPoints.Clear();
                         for (int i = 0; i < lockedPoints.Count; i++)
                             initialLockedPoints.Add(lockedPoints[i]);
                     }
 
-                }
-                else if (touch.phase == TouchPhase.Moved && initialMouseInsideBounds)
-                {
-                    if (mouseActionType == MouseActionType.Move)
-                    {
+                } else if (touch.phase == TouchPhase.Moved && initialMouseInsideBounds) {
+                    if (mouseActionType == MouseActionType.Move) {
                         Vector2 currentTouchPos = touch.position;
                         targetMoveOffset = (initialMousePos - currentTouchPos) + initialMoveOffset;
-                    }
-                    else if (mouseActionType == MouseActionType.SelectAreaToZoom)
-                    {
+                    } else if (mouseActionType == MouseActionType.SelectAreaToZoom) {
                         if (!zoomSelectionRectTransform.gameObject.activeSelf)
                             zoomSelectionRectTransform.gameObject.SetActive(true);
                         SelectAreaToZoom(false);
-                    }
-                    else if (mouseActionType == MouseActionType.SelectPoints)
-                    {
+                    } else if (mouseActionType == MouseActionType.SelectPoints) {
                         if (!pointSelectionRectTransform.gameObject.activeSelf)
                             pointSelectionRectTransform.gameObject.SetActive(true);
                         SelectPoints(false);
                     }
-                }
-                else if (touch.phase == TouchPhase.Ended && initialMouseInsideBounds)
-                {
+                } else if (touch.phase == TouchPhase.Ended && initialMouseInsideBounds) {
                     if (mouseActionType == MouseActionType.SelectAreaToZoom)
                         SelectAreaToZoom(true);
                     else if (mouseActionType == MouseActionType.SelectPoints)
@@ -1126,37 +1017,31 @@ namespace StatsMod
                 }
             }
         }
-        private void SelectAreaToZoom(bool release)
-        {
+        private void SelectAreaToZoom(bool release) {
             Vector2 relativeInitialMousePos = (new Vector2(initialMousePos.x, initialMousePos.y) - new Vector2(graphContent.transform.position.x, graphContent.transform.position.y)) / contentScale;
 
             Vector2 preserveAspectRatioCorner = new Vector2(mousePos.x, relativeInitialMousePos.y + (mousePos.x - relativeInitialMousePos.x) / GS.GraphSize.x * GS.GraphSize.y * contentScale.x / contentScale.y);
             Vector2 originalAspectRatioCorner = new Vector2(mousePos.x, relativeInitialMousePos.y + (mousePos.x - relativeInitialMousePos.x));
 
             Vector2 newCorner = rectangleType == RectangleType.Free ? mousePos : (rectangleType == RectangleType.PreserveAspectRatio ? preserveAspectRatioCorner : originalAspectRatioCorner);
-            if (!release)
-            {
+            if (!release) {
                 zoomSelectionRectTransform.anchoredPosition = (relativeInitialMousePos + (newCorner - relativeInitialMousePos) / 2f) * contentScale;
                 Vector2 areaSize = new Vector2(Mathf.Abs(newCorner.x - relativeInitialMousePos.x), Mathf.Abs(newCorner.y - relativeInitialMousePos.y)) * contentScale;
                 zoomSelectionRectTransform.sizeDelta = areaSize;
                 zoomSelectionImage.color = GS.ZoomSelectionColor;
-                for (int i = 0; i < zoomSelectionOutlines.Count; i++)
-                {
+                for (int i = 0; i < zoomSelectionOutlines.Count; i++) {
                     if (i % 2 == 0) // Left and Right outlines
                     {
                         zoomSelectionOutlines[i].sizeDelta = new Vector2(GS.ZoomSelectionOutlineWidth, areaSize.y + GS.ZoomSelectionOutlineWidth * 2);
                         zoomSelectionOutlines[i].anchoredPosition = new Vector2((i == 0 ? -1 : 1) * (areaSize.x + GS.ZoomSelectionOutlineWidth) / 2, 0);
-                    }
-                    else // Top and Bottom outlines
-                    {
+                    } else // Top and Bottom outlines
+                      {
                         zoomSelectionOutlines[i].sizeDelta = new Vector2(areaSize.x + GS.ZoomSelectionOutlineWidth * 2, GS.ZoomSelectionOutlineWidth);
                         zoomSelectionOutlines[i].anchoredPosition = new Vector2(0, (i == 1 ? -1 : 1) * (areaSize.y + GS.ZoomSelectionOutlineWidth) / 2);
                     }
                     zoomSelectionOutlineImages[i].color = GS.ZoomSelectionOutlineColor;
                 }
-            }
-            else
-            {
+            } else {
                 zoomSelectionRectTransform.gameObject.SetActive(false);
                 Vector2 newBottomLeft = new Vector2(Mathf.Min(relativeInitialMousePos.x, newCorner.x), Mathf.Min(relativeInitialMousePos.y, newCorner.y));
                 Vector2 newTopRight = new Vector2(Mathf.Max(relativeInitialMousePos.x, newCorner.x), Mathf.Max(relativeInitialMousePos.y, newCorner.y));
@@ -1165,12 +1050,10 @@ namespace StatsMod
             }
 
         }
-        private void SelectPoints(bool release)
-        {
+        private void SelectPoints(bool release) {
             Vector2 relativeInitialMousePos = (new Vector2(initialMousePos.x, initialMousePos.y) - new Vector2(graphContent.transform.position.x, graphContent.transform.position.y)) / contentScale;
 
-            if (!release)
-            {
+            if (!release) {
                 Vector2 newCorner = mousePos;
 
                 pointSelectionRectTransform.anchoredPosition = (relativeInitialMousePos + (newCorner - relativeInitialMousePos) / 2f) * contentScale;
@@ -1178,81 +1061,59 @@ namespace StatsMod
                 pointSelectionRectTransform.sizeDelta = areaSize;
                 pointSelectionImage.color = GS.PointSelectionColor;
 
-                for (int i = 0; i < pointSelectionOutlines.Count; i++)
-                {
+                for (int i = 0; i < pointSelectionOutlines.Count; i++) {
                     if (i % 2 == 0) // Left and Right outlines
                     {
                         pointSelectionOutlines[i].sizeDelta = new Vector2(GS.PointSelectionOutlineWidth, areaSize.y + GS.PointSelectionOutlineWidth * 2);
                         pointSelectionOutlines[i].anchoredPosition = new Vector2((i == 0 ? -1 : 1) * (areaSize.x + GS.PointSelectionOutlineWidth) / 2, 0);
-                    }
-                    else // Top and Bottom outlines
-                    {
+                    } else // Top and Bottom outlines
+                      {
                         pointSelectionOutlines[i].sizeDelta = new Vector2(areaSize.x + GS.PointSelectionOutlineWidth * 2, GS.PointSelectionOutlineWidth);
                         pointSelectionOutlines[i].anchoredPosition = new Vector2(0, (i == 1 ? -1 : 1) * (areaSize.y + GS.PointSelectionOutlineWidth) / 2);
                     }
                     pointSelectionOutlineImages[i].color = GS.PointSelectionOutlineColor;
                 }
-                if (rectangleSelectionPhase == RectangleSelectionPhase.Moving)
-                {
+                if (rectangleSelectionPhase == RectangleSelectionPhase.Moving) {
                     Vector2 newBottomLeft = new Vector2(Mathf.Min(relativeInitialMousePos.x, mousePos.x), Mathf.Min(relativeInitialMousePos.y, mousePos.y));
                     Vector2 newTopRight = new Vector2(Mathf.Max(relativeInitialMousePos.x, mousePos.x), Mathf.Max(relativeInitialMousePos.y, mousePos.y));
                     PointSelect(true, newBottomLeft, newTopRight);
                 }
-            }
-            else
-            {
+            } else {
                 pointSelectionRectTransform.gameObject.SetActive(false);
                 Vector2 newBottomLeft = new Vector2(Mathf.Min(relativeInitialMousePos.x, mousePos.x), Mathf.Min(relativeInitialMousePos.y, mousePos.y));
                 Vector2 newTopRight = new Vector2(Mathf.Max(relativeInitialMousePos.x, mousePos.x), Mathf.Max(relativeInitialMousePos.y, mousePos.y));
-                if (rectangleSelectionPhase == RectangleSelectionPhase.Release)
-                {
+                if (rectangleSelectionPhase == RectangleSelectionPhase.Release) {
                     PointSelect(false, newBottomLeft, newTopRight);
                 }
             }
         }
-        private void PointSelect(bool moving, Vector2 newBottomLeft, Vector2 newTopRight)
-        {
-            for (int index = (int)xAxisRange.x; index <= (int)xAxisRange.y; index++)
-            {
+        private void PointSelect(bool moving, Vector2 newBottomLeft, Vector2 newTopRight) {
+            for (int index = (int)xAxisRange.x; index <= (int)xAxisRange.y; index++) {
                 Vector2 pointValue = values[index];
-                if (pointValue.x >= newBottomLeft.x && pointValue.x <= newTopRight.x && pointValue.y >= newBottomLeft.y && pointValue.y <= newTopRight.y)
-                {
-                    if (rectangleSelectionType == RectangleSelectionType.SelectUnselect)
-                    {
-                        if (moving)
-                        {
-                            if (initialLockedPoints.Contains(index) && lockedPoints.Contains(index))
-                            {
+                if (pointValue.x >= newBottomLeft.x && pointValue.x <= newTopRight.x && pointValue.y >= newBottomLeft.y && pointValue.y <= newTopRight.y) {
+                    if (rectangleSelectionType == RectangleSelectionType.SelectUnselect) {
+                        if (moving) {
+                            if (initialLockedPoints.Contains(index) && lockedPoints.Contains(index)) {
                                 lockedPoints.Remove(index);
                                 recentlyLockedPoints.Add(index);
-                            }
-                            else if (!initialLockedPoints.Contains(index) && !lockedPoints.Contains(index))
-                            {
+                            } else if (!initialLockedPoints.Contains(index) && !lockedPoints.Contains(index)) {
                                 lockedPoints.Add(index);
                                 recentlyLockedPoints.Add(index);
                             }
 
-                        }
-                        else
-                        {
+                        } else {
                             if (lockedPoints.Contains(index))
                                 lockedPoints.Remove(index);
                             else
                                 lockedPoints.Add(index);
                         }
-                    }
-                    else
-                    {
-                        if (moving)
-                        {
-                            if (!initialLockedPoints.Contains(index) && !lockedPoints.Contains(index))
-                            {
+                    } else {
+                        if (moving) {
+                            if (!initialLockedPoints.Contains(index) && !lockedPoints.Contains(index)) {
                                 lockedPoints.Add(index);
                                 recentlyLockedPoints.Add(index);
                             }
-                        }
-                        else
-                        {
+                        } else {
                             if (!lockedPoints.Contains(index))
                                 lockedPoints.Add(index);
                         }
@@ -1262,20 +1123,15 @@ namespace StatsMod
                     lockedPoints = lockedPoints.Distinct().ToList();
                 }
             }
-            for (int i = 0; i < recentlyLockedPoints.Count; i++)
-            {
+            for (int i = 0; i < recentlyLockedPoints.Count; i++) {
                 int index = recentlyLockedPoints[i];
                 Vector2 pointValue = values[index];
 
-                if (!(pointValue.x >= newBottomLeft.x && pointValue.x <= newTopRight.x && pointValue.y >= newBottomLeft.y && pointValue.y <= newTopRight.y))
-                {
-                    if (initialLockedPoints.Contains(index))
-                    {
+                if (!(pointValue.x >= newBottomLeft.x && pointValue.x <= newTopRight.x && pointValue.y >= newBottomLeft.y && pointValue.y <= newTopRight.y)) {
+                    if (initialLockedPoints.Contains(index)) {
                         if (!lockedPoints.Contains(index))
                             lockedPoints.Add(index);
-                    }
-                    else
-                    {
+                    } else {
                         if (lockedPoints.Contains(index))
                             lockedPoints.Remove(index);
                     }
@@ -1293,15 +1149,12 @@ namespace StatsMod
             int min = 0;
             int max = sortedIndices.Count - 1;
             float value;
-            while (min <= max)
-            {
+            while (min <= max) {
                 int middle = min + (max - min) / 2;
                 value = values[sortedIndices[middle]].x;
-                if ((findLeft ? value >= target : value <= target))
-                {
+                if ((findLeft ? value >= target : value <= target)) {
                     if ((findLeft && (middle == 0 || values[sortedIndices[middle - 1]].x < target)) ||
-                        (!findLeft && (middle == sortedIndices.Count - 1 || values[sortedIndices[middle + 1]].x > target)))
-                    {
+                        (!findLeft && (middle == sortedIndices.Count - 1 || values[sortedIndices[middle + 1]].x > target))) {
                         return middle;
                     }
 
@@ -1309,9 +1162,7 @@ namespace StatsMod
                         max = middle - 1;
                     else
                         min = middle + 1;
-                }
-                else
-                {
+                } else {
                     if (findLeft)
                         min = middle + 1;
                     else
@@ -1320,19 +1171,16 @@ namespace StatsMod
             }
             return -1;
         }
-        private void UpdateSizeDelta(RectTransform rect, Vector2 size)
-        {
+        private void UpdateSizeDelta(RectTransform rect, Vector2 size) {
             if (Mathf.Abs(rect.sizeDelta.x - size.x) > 0.1f || Mathf.Abs(rect.sizeDelta.y - size.y) > 0.1f)
                 rect.sizeDelta = size;
         }
-        private void UpdateAnchoredPosition(RectTransform rect, Vector2 position)
-        {
+        private void UpdateAnchoredPosition(RectTransform rect, Vector2 position) {
             if (Mathf.Abs(rect.sizeDelta.x - position.x) > 0.1f || Mathf.Abs(rect.sizeDelta.y - position.y) > 0.1f)
                 rect.anchoredPosition = position;
         }
         [Flags]
-        public enum UpdateMethod
-        {
+        public enum UpdateMethod {
             UpdatePositionAndScale = 1 << 0,
             UpdateOutlines = 1 << 1,
             UpdatePointVisuals = 1 << 2,
@@ -1342,21 +1190,17 @@ namespace StatsMod
             UpdateGridLines = 1 << 6,
             All = 1 << 7
         }
-        private bool CheckForErrors()
-        {
-            if (GetComponent<GraphSettings>() == null)
-            {
+        private bool CheckForErrors() {
+            if (GetComponent<GraphSettings>() == null) {
                 Debug.LogError("This GameObject has no GraphSettings script attached. Attach GraphSettings and restart");
                 error = true;
                 return true;
             }
-            if (GetComponent<GraphSettings>().GridTextFont == null)
-            {
+            if (GetComponent<GraphSettings>().GridTextFont == null) {
                 Debug.LogError("No font was found. Assign a font for GraphSettings.GridTextFont and restart");
                 error = true;
             }
-            if (GetComponent<GraphSettings>().PointSprite == null)
-            {
+            if (GetComponent<GraphSettings>().PointSprite == null) {
                 Debug.LogError("No point sprite was found. Assign a sprite for GraphSettings.PointSprite and restart");
                 error = true;
             }
