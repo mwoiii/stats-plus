@@ -145,7 +145,8 @@ namespace StatsMod
 
         public static string GetRScript()
         {
-            CreateIndependentDatabase();
+            if (NetworkServer.active & independentDatabase == null) { CreateIndependentDatabase(); } // エクセプション　ハンドリング！
+                
             StringBuilder a = new(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
 
