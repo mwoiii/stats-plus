@@ -147,7 +147,7 @@ namespace StatsMod
 
         public static string GetRScript()
         {
-            if (independentDatabase == null) { CreateIndependentDatabase(); }
+            CreateIndependentDatabase();
                 
             StringBuilder a = new(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
