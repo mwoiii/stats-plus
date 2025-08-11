@@ -83,6 +83,8 @@ namespace StatsMod
 
         private static void CreateIndependentDatabase()
         {
+            if (!NetworkServer.active) { return; }
+
             independentDatabase = [];
             foreach (PlayerStatsDatabase i in statsDatabase)
             {
@@ -145,7 +147,7 @@ namespace StatsMod
 
         public static string GetRScript()
         {
-            if (NetworkServer.active & independentDatabase == null) { CreateIndependentDatabase(); } // エクセプション　ハンドリング！
+            if (independentDatabase == null) { CreateIndependentDatabase(); }
                 
             StringBuilder a = new(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
