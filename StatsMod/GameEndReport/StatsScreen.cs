@@ -114,8 +114,10 @@ namespace StatsMod {
         public static void CreatePlayerPlotButtons(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat) {
             int index = 0;
             foreach (IndependentEntry entry in RecordHandler.independentDatabase) {
+                Transform tempButtonHolder = statContainer.transform.Find("ButtonHolder");
                 CreateStatPlotButton(statContainer, labelText, stat, index, entry.playerName);
                 index++;
+                Object.Destroy(tempButtonHolder);
             }
 
             // -1: special number for all players?
@@ -160,8 +162,15 @@ namespace StatsMod {
         }
 
         private static void CreateStatPlotButton(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat, int statIndex, string plotForName) {
-            GameObject statButton = Object.Instantiate(continueButton.gameObject, statContainer.transform);
+            // button holder
+            GameObject buttonHolder = Object.Instantiate(statContainer.transform.Find("ButtonHolder").gameObject, statContainer.transform);
+
+            // standard plot button
+            GameObject statButton = Object.Instantiate(continueButton.gameObject, buttonHolder.transform);
             statButton.name = "StatButton";
+            LayoutElement layoutElement = statButton.GetComponent<LayoutElement>();
+            layoutElement.minWidth = -1f;
+            layoutElement.preferredWidth = 200f;
             RoR2.UI.HGButton button = statButton.GetComponent<RoR2.UI.HGButton>();
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => {
@@ -174,6 +183,14 @@ namespace StatsMod {
             Transform glyphTransform = statButton.transform.Find("GenericGlyph");
             if (glyphTransform) {
                 glyphTransform.gameObject.SetActive(false);
+            }
+
+            // log button
+            GameObject logStatButton = Object.Instantiate(statButton.gameObject, buttonHolder.transform);
+            logStatButton.GetComponent<LayoutElement>().preferredWidth = 50f;
+            labelText = logStatButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
+            if (labelText) {
+                labelText.token = "Log";
             }
         }
 
