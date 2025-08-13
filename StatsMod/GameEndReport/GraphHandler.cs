@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Image = UnityEngine.UI.Image;
 
 namespace StatsMod {
     public class GraphHandler : MonoBehaviour {
@@ -734,6 +735,27 @@ namespace StatsMod {
                 activePointIndex = pointIndex;
                 activePointValue = values[pointIndex];
                 pointIsActive = enter;
+            }
+
+            // coordinate text display on hover
+            if (points[pointIndex].transform.childCount > 0) { Destroy(points[pointIndex].transform.GetChild(0).gameObject); }
+            else
+            {
+                var coordinateDisplay = new GameObject("coordinateDisplay");
+                coordinateDisplay.transform.SetParent(points[pointIndex].transform, false);
+
+                var rt = coordinateDisplay.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                var actualText = coordinateDisplay.gameObject.AddComponent<TextMeshProUGUI>();
+                actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {values[pointIndex].y}";
+                actualText.color = Color.white;
+                actualText.fontSize = 30;
+                actualText.alignment = TextAlignmentOptions.Center;
+                actualText.enableWordWrapping = false;
             }
         }
         private void PointClicked(int pointIndex) {

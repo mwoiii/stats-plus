@@ -119,7 +119,7 @@ namespace StatsMod {
                 Transform tempButtonHolder = statContainer.transform.Find("ButtonHolder");
                 CreateStatPlotButton(statContainer, labelText, stat, index, entry.playerName);
                 index++;
-                Object.Destroy(tempButtonHolder);
+                // Object.Destroy(tempButtonHolder); lots of errors if this line is included for some reason
             }
 
             // -1: special number for all players?
