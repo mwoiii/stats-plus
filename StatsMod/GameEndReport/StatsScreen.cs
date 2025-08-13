@@ -1,6 +1,5 @@
 ﻿using LeTai.Asset.TranslucentImage;
 using RoR2;
-using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -114,16 +113,19 @@ namespace StatsMod {
         }
 
         public static void CreatePlayerPlotButtons(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat) {
+            // get reference before The Reckoning
+            Transform tempButtonHolder = statContainer.transform.Find("ButtonHolder");
             int index = 0;
             foreach (IndependentEntry entry in RecordHandler.independentDatabase) {
-                Transform tempButtonHolder = statContainer.transform.Find("ButtonHolder");
                 CreateStatPlotButton(statContainer, labelText, stat, index, entry.playerName);
                 index++;
-                // Object.Destroy(tempButtonHolder); lots of errors if this line is included for some reason
             }
 
-            // -1: special number for all players?
+            // -1: special number for all players
             CreateStatPlotButton(statContainer, labelText, stat, -1, "all players");
+
+            // The Reckoning
+            Object.Destroy(tempButtonHolder.gameObject);
         }
 
         private static void CreateRScriptButton(GameObject panel) {
@@ -180,11 +182,10 @@ namespace StatsMod {
             });
             labelText = statButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
             if (labelText) {
-                
+
                 string playerCol;
-                if (statIndex != -1) { playerCol = ColorUtility.ToHtmlStringRGB(GraphSettings.Rainbow((float)statIndex / (float)RecordHandler.independentDatabase.Count)); }
-                else { playerCol = "FFFFFF"; }
-                
+                if (statIndex != -1) { playerCol = ColorUtility.ToHtmlStringRGB(GraphSettings.Rainbow((float)statIndex / (float)RecordHandler.independentDatabase.Count)); } else { playerCol = "FFFFFF"; }
+
                 labelText.token = $"Plot for <color=#{playerCol}>{plotForName}</color>";
             }
             Transform glyphTransform = statButton.transform.Find("GenericGlyph");
