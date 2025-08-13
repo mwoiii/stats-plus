@@ -1,8 +1,10 @@
 ﻿using LeTai.Asset.TranslucentImage;
 using RoR2;
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace StatsMod {
     public static class StatsScreen {
@@ -170,7 +172,7 @@ namespace StatsMod {
             statButton.name = "StatButton";
             LayoutElement layoutElement = statButton.GetComponent<LayoutElement>();
             layoutElement.minWidth = -1f;
-            layoutElement.preferredWidth = 200f;
+            layoutElement.preferredWidth = 230f;
             RoR2.UI.HGButton button = statButton.GetComponent<RoR2.UI.HGButton>();
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => {
@@ -178,7 +180,12 @@ namespace StatsMod {
             });
             labelText = statButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
             if (labelText) {
-                labelText.token = $"Plot for {plotForName}";
+                
+                string playerCol;
+                if (statIndex != -1) { playerCol = ColorUtility.ToHtmlStringRGB(GraphSettings.Rainbow((float)statIndex / (float)RecordHandler.independentDatabase.Count)); }
+                else { playerCol = "FFFFFF"; }
+                
+                labelText.token = $"Plot for <color=#{playerCol}>{plotForName}</color>";
             }
             Transform glyphTransform = statButton.transform.Find("GenericGlyph");
             if (glyphTransform) {
@@ -187,11 +194,17 @@ namespace StatsMod {
 
             // log button
             GameObject logStatButton = Object.Instantiate(statButton.gameObject, buttonHolder.transform);
-            logStatButton.GetComponent<LayoutElement>().preferredWidth = 50f;
+            logStatButton.GetComponent<LayoutElement>().preferredWidth = 20f;
             labelText = logStatButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
             if (labelText) {
-                labelText.token = "Log";
+                labelText.token = "<color=#999999>log10</color>";
             }
+
+            RoR2.UI.HGButton logbutton = logStatButton.GetComponent<RoR2.UI.HGButton>();
+            logbutton.onClick.RemoveAllListeners();
+            logbutton.onClick.AddListener(() => {
+                graph.GetComponent<GraphHandler>().PlotStat(stat, statIndex, true);
+            });
         }
 
         public static void CreateGraph() {

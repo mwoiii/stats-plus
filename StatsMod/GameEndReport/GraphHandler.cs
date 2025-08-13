@@ -27,7 +27,7 @@ namespace StatsMod {
             UpdateGraphInternal(UpdateMethod.All);
         }
 
-        public void PlotStat(string statName, int index) {
+        public void PlotStat(string statName, int index, bool log = false) {
             // something about there being points on the same y or x and y makes the graph very upset so we add a very small offset for new graphs
             // ^ 1 year later what is he talking about
 
@@ -45,7 +45,10 @@ namespace StatsMod {
                 List<object> stat = RecordHandler.independentDatabase[index].GetStatSeries(statName);
                 for (int i = 0; i < timestamps.Count; i++) {
                     float x = Convert.ToSingle(timestamps[i]);
+                    
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    if (log && y != 0) { y = (float)Math.Log10(Math.Abs(y)); }
+
                     CreatePoint(new Vector2(x, y));
                     if (y < smallestY) {
                         smallestY = y;
@@ -62,7 +65,10 @@ namespace StatsMod {
                     List<object> stat = entry.GetStatSeries(statName);
                     for (int i = 0; i < timestamps.Count; i++) {
                         float x = Convert.ToSingle(timestamps[i]);
+                        
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                        if (log && y!=0 ) { y = (float)Math.Log10(Math.Abs(y)); }
+
                         if (i == 0) {
                             GS.LineColor = Color.clear;
                         }
@@ -82,7 +88,7 @@ namespace StatsMod {
             float yOffset = math.max(math.abs(smallestY), math.abs(largestY)) * 0.05f;
 
             SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count - 1]) + xOffset, largestY + yOffset));
-            UpdateGraph();
+            UpdateGraph();         
         }
 
         private void ResetGraph() {
