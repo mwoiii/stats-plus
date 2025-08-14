@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
@@ -497,7 +498,6 @@ namespace StatsMod {
                     textRect.SetParent(xGrid.GetComponent<RectTransform>());
                     xText.font = GS.GridTextFont;
                     xText.fontStyle = FontStyles.Bold;
-                    xText.fontStyle = FontStyles.Bold;
                     xText.alignment = TextAlignmentOptions.Center;
                     xText.verticalAlignment = VerticalAlignmentOptions.Middle;
                     xText.color = GS.XAxisTextColor;
@@ -897,6 +897,31 @@ namespace StatsMod {
                     UpdateSizeDelta(xAxisTextRects[i - 1], new Vector2(1f / spacing.x * contentScale.x, GS.XAxisTextSize));
                     UpdateAnchoredPosition(xAxisTextRects[i - 1], new Vector2(0, -center.y * contentScale.y + GS.XAxisTextOffset));
                     xAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.x) > 0 ? Mathf.RoundToInt(GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString() : (GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString("R");
+                }
+            }
+
+            // seconds label. Relies on timestamps never being negative (i.e. no negative x values)
+            if (xAxisTexts.Count >= 2)
+            {
+                int point = 0;
+                while (true)
+                {
+                    TextMeshProUGUI guy = xAxisTexts[point];
+                    TextMeshProUGUI gal = xAxisTexts[point+1];
+                    if (guy.text[0] == '-')
+                    {
+                        if (gal.text[0] == '-')
+                        {
+                            guy.text = ""; // can't destroy breaks everything
+                        }
+                        else
+                        {
+                            guy.text = "<color=#999999>seconds</color>";
+                            break;
+                        }
+                        point += 1;
+                    }
+                    else { break; }
                 }
             }
 

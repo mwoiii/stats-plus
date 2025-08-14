@@ -93,6 +93,9 @@ namespace StatsMod {
                     Log.Error("Graph window must be created first!");
                 }
 
+                // title
+
+
                 // creation of the r script button
                 CreateRScriptButton(panel);
 
