@@ -57,69 +57,69 @@
             Language.Add(bodyPrefix + "totalDamageDealt", "The total amount of damage dealt by each individual player.");
 
             Language.Add(titlePrefix + "totalMinionDamageDealt", "Total Minion Damage Dealt");
-            Language.Add(bodyPrefix + "totalMinionDamageDealt", "placeholder");
+            Language.Add(bodyPrefix + "totalMinionDamageDealt", "The total damage dealt by all minions belonging to an individual player.");
 
             Language.Add(titlePrefix + "totalDamageTaken", "Total Damage Taken");
-            Language.Add(bodyPrefix + "totalDamageTaken", "placeholder");
+            Language.Add(bodyPrefix + "totalDamageTaken", "The total damage that each individual player took.");
 
             Language.Add(titlePrefix + "totalHealthHealed", "Total Health Healed");
-            Language.Add(bodyPrefix + "totalHealthHealed", "placeholder");
+            Language.Add(bodyPrefix + "totalHealthHealed", "The total amount of health that each individual player restored.");
 
             Language.Add(titlePrefix + "highestDamageDealt", "Highest Damage Dealt");
-            Language.Add(bodyPrefix + "highestDamageDealt", "placeholder");
+            Language.Add(bodyPrefix + "highestDamageDealt", "The highest damage attack landed by each player.");
 
             Language.Add(titlePrefix + "goldCollected", "Gold Collected");
-            Language.Add(bodyPrefix + "goldCollected", "placeholder");
+            Language.Add(bodyPrefix + "goldCollected", "The total gold collected by each individual player");
 
             Language.Add(titlePrefix + "totalItemsCollected", "Total Items Collected");
-            Language.Add(bodyPrefix + "totalItemsCollected", "placeholder");
+            Language.Add(bodyPrefix + "totalItemsCollected", "Each player's total amount of items.");
 
             Language.Add(titlePrefix + "totalDistanceTraveled", "Total Distance Traveled");
-            Language.Add(bodyPrefix + "totalDistanceTraveled", "placeholder");
+            Language.Add(bodyPrefix + "totalDistanceTraveled", "The distance that each individual player covered, in metres.");
 
             Language.Add(titlePrefix + "totalPurchases", "Total Purchases");
-            Language.Add(bodyPrefix + "totalPurchases", "placeholder");
+            Language.Add(bodyPrefix + "totalPurchases", "The total amount of interactable purchases made by each player");
 
             Language.Add(titlePrefix + "totalGoldPurchases", "Total Gold Purchases");
-            Language.Add(bodyPrefix + "totalGoldPurchases", "placeholder");
+            Language.Add(bodyPrefix + "totalGoldPurchases", "The total amount of interactable purchases costing gold made by each player.");
 
             Language.Add(titlePrefix + "totalBloodPurchases", "Total Blood Purchases");
-            Language.Add(bodyPrefix + "totalBloodPurchases", "placeholder");
+            Language.Add(bodyPrefix + "totalBloodPurchases", "The total amount of interactable purchases costing health made by each player.");
 
             Language.Add(titlePrefix + "totalLunarPurchases", "Total Lunar Purchases");
-            Language.Add(bodyPrefix + "totalLunarPurchases", "placeholder");
+            Language.Add(bodyPrefix + "totalLunarPurchases", "The total amount of interactable purchases costing lunar coins made by each player.");
 
             Language.Add(titlePrefix + "totalTier1Purchases", "Total Tier 1 Purchases");
-            Language.Add(bodyPrefix + "totalTier1Purchases", "placeholder");
+            Language.Add(bodyPrefix + "totalTier1Purchases", "The total amount of interactable purchases costing common (white) items made by each player");
 
             Language.Add(titlePrefix + "totalTier2Purchases", "Total Tier 2 Purchases");
-            Language.Add(bodyPrefix + "totalTier2Purchases", "placeholder");
+            Language.Add(bodyPrefix + "totalTier2Purchases", "The total amount of interactable purchases costing uncommon (green) items made by each player");
 
             Language.Add(titlePrefix + "totalTier3Purchases", "Total Tier 3 Purchases");
-            Language.Add(bodyPrefix + "totalTier3Purchases", "placeholder");
+            Language.Add(bodyPrefix + "totalTier3Purchases", "The total amount of interactable purchases costing legendary (red) items made by each player");
 
             Language.Add(titlePrefix + "totalDronesPurchased", "Total Drones Purchased");
-            Language.Add(bodyPrefix + "totalDronesPurchased", "placeholder");
+            Language.Add(bodyPrefix + "totalDronesPurchased", "The total amount of drone interactables purchased by each individual player");
 
             Language.Add(titlePrefix + "totalTurretsPurchased", "Total Turrets Purchased");
-            Language.Add(bodyPrefix + "totalTurretsPurchased", "placeholder");
+            Language.Add(bodyPrefix + "totalTurretsPurchased", "The total amount of turret interactables purchased by each individual player");
 
             Language.Add(titlePrefix + "totalGreenSoupsPurchased", "Total Green Soups Purchased");
-            Language.Add(bodyPrefix + "totalGreenSoupsPurchased", "placeholder");
+            Language.Add(bodyPrefix + "totalGreenSoupsPurchased", "The total amount of common-to-uncommon item cauldrons interacted with by each individual player");
 
             Language.Add(titlePrefix + "totalRedSoupsPurchased", "Total Red Soups Purchased");
-            Language.Add(bodyPrefix + "totalRedSoupsPurchased", "placeholder");
+            Language.Add(bodyPrefix + "totalRedSoupsPurchased", "The total amount of uncommon-to-legendary item cauldrons interacted with by each individual player");
             #endregion
 
             #region Custom Stats
             Language.Add(titlePrefix + "shrinePurchases", "Shrine of Chance Purchases");
-            Language.Add(bodyPrefix + "shrinePurchases", "placeholder");
+            Language.Add(bodyPrefix + "shrinePurchases", "The total amount of times a Shrine of Chance was interacted with by an individual player.");
 
             Language.Add(titlePrefix + "shrineWins", "Shrine of Chance Wins");
-            Language.Add(bodyPrefix + "shrineWins", "placeholder");
+            Language.Add(bodyPrefix + "shrineWins", "The total amount of times a Shrine of Chance was successfully interacted with by an individual player.");
 
             Language.Add(titlePrefix + "orderHits", "Shrine of Order Hits");
-            Language.Add(bodyPrefix + "orderHits", "placeholder");
+            Language.Add(bodyPrefix + "orderHits", "The total amount of times a Shrine of Order was interacted with by an individual player.");
 
             Language.Add(titlePrefix + "timeStill", "Time Still");
             Language.Add(bodyPrefix + "timeStill", "The total amount of time in seconds each player spent standing still while the stopwatch was active.");
@@ -132,22 +132,22 @@
             Language.Add(bodyPrefix + "timeLowHealth", "The total amount of time in seconds each player spent with their healh below 25%.");
 
             Language.Add(titlePrefix + "fallDamage", "Fall Damage");
-            Language.Add(bodyPrefix + "fallDamage", "placeholder");
+            Language.Add(bodyPrefix + "fallDamage", "The total amount of fall damage received by each player.");
 
             Language.Add(titlePrefix + "coinsSpent", "Lunar Coins Spent");
-            Language.Add(bodyPrefix + "coinsSpent", "placeholder");
+            Language.Add(bodyPrefix + "coinsSpent", "The total amount of lunar coins spent by each player.");
 
             Language.Add(titlePrefix + "avenges", "Avenges");
             Language.Add(bodyPrefix + "avenges", "How many times each player killed an enemy that had harmed another player.");
 
             Language.Add(titlePrefix + "timesLastStanding", "Times Last Standing");
-            Language.Add(bodyPrefix + "timesLastStanding", "placeholder");
+            Language.Add(bodyPrefix + "timesLastStanding", "The amount of times a player was the last player standing.");
 
             Language.Add(titlePrefix + "itemLead", "Item Lead");
-            Language.Add(bodyPrefix + "itemLead", "placeholder");
+            Language.Add(bodyPrefix + "itemLead", "The item lead of the player with the most items to the player with the second most items.");
 
             Language.Add(titlePrefix + "nonScrapPrinted", "Non-Scrap Printed");
-            Language.Add(bodyPrefix + "nonScrapPrinted", "placeholder");
+            Language.Add(bodyPrefix + "nonScrapPrinted", "The amount of non-scrap items spent by each individual player.");
 
             Language.Add(titlePrefix + "likelyDonations", "Likely Donations");
             Language.Add(bodyPrefix + "likelyDonations", "The total amount of items that each player is estimated to have donated to other players.");
