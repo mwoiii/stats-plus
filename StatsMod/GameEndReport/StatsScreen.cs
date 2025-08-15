@@ -1,6 +1,7 @@
 ﻿using LeTai.Asset.TranslucentImage;
 using RoR2;
 using RoR2.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -101,8 +102,25 @@ namespace StatsMod {
                     Log.Error("Graph window must be created first!");
                 }
 
-                // title
+                // plot title (fragile code based UI element please be careful)
+                var plotTitle = new GameObject("plotTitle");
+                plotTitle.transform.SetParent(graph.transform);
 
+                var rt = plotTitle.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                var txt = plotTitle.AddComponent<HGTextMeshProUGUI>();
+                plotTitle.AddComponent<RoR2.UI.LanguageTextMeshController>();
+                txt.text = "meow";
+                txt.color = Color.white;
+                txt.fontSize = 8;
+                txt.alignment = TextAlignmentOptions.Center;
+                txt.transform.localPosition = new Vector3(0, 450, 0); 
+                txt.transform.localScale = new Vector3(10, 10, 10);
+                txt.raycastTarget = false;
 
                 // creation of the r script button
                 CreateRScriptButton(panel);

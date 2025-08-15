@@ -1,4 +1,6 @@
-﻿using System;
+﻿using IL.RoR2.UI;
+using StatsMod.CustomStats;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
@@ -38,6 +40,9 @@ namespace StatsMod {
 
             Single smallestY = -5f;
             Single largestY = 5f;
+
+            // change plotTitle
+            graph.Find("plotTitle").GetComponentInChildren<RoR2.UI.LanguageTextMeshController>().token = $"STATSMOD_STAT_TITLE_{statName}";
 
             List<object> timestamps = RecordHandler.independentDatabase[0].GetStatSeries("timestamps");
             if (index >= 0) {
@@ -756,6 +761,7 @@ namespace StatsMod {
                 actualText.fontSize = 30;
                 actualText.alignment = TextAlignmentOptions.Center;
                 actualText.enableWordWrapping = false;
+                actualText.raycastTarget = false;
             }
         }
         private void PointClicked(int pointIndex) {
@@ -897,31 +903,20 @@ namespace StatsMod {
                     UpdateSizeDelta(xAxisTextRects[i - 1], new Vector2(1f / spacing.x * contentScale.x, GS.XAxisTextSize));
                     UpdateAnchoredPosition(xAxisTextRects[i - 1], new Vector2(0, -center.y * contentScale.y + GS.XAxisTextOffset));
                     xAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.x) > 0 ? Mathf.RoundToInt(GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString() : (GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString("R");
+                    if (xAxisTexts[i - 1].text[0] == '-') { xAxisTexts[i - 1].text = ""; } // blanks negative x axis labels
                 }
             }
 
-            // seconds label. Relies on timestamps never being negative (i.e. no negative x values)
+            // seconds label - relies on blank negative x labels
             if (xAxisTexts.Count >= 2)
             {
-                int point = 0;
-                while (true)
+                for (int point = 1; point < xAxisTexts.Count; point++)
                 {
-                    TextMeshProUGUI guy = xAxisTexts[point];
-                    TextMeshProUGUI gal = xAxisTexts[point+1];
-                    if (guy.text[0] == '-')
+                    if (xAxisTexts[point-1].text == "" && xAxisTexts[point].text != "")
                     {
-                        if (gal.text[0] == '-')
-                        {
-                            guy.text = ""; // can't destroy breaks everything
-                        }
-                        else
-                        {
-                            guy.text = "<color=#999999>seconds</color>";
-                            break;
-                        }
-                        point += 1;
+                        xAxisTexts[point-1].text = "seconds";
+                        break;
                     }
-                    else { break; }
                 }
             }
 
