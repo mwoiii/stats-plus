@@ -21,6 +21,8 @@ namespace StatsMod {
 
         public static GameObject graph;
 
+        private static GameObject plotTitle;
+
         public static void CreateStatsWindow() {
             if (CurrentHud != null) {
                 // preventing panel from fading in blur when stats window is closed
@@ -103,8 +105,9 @@ namespace StatsMod {
                 }
 
                 // plot title (fragile code based UI element please be careful)
-                var plotTitle = new GameObject("plotTitle");
-                plotTitle.transform.SetParent(graph.transform);
+                Transform plotTitleContainer = panel.transform.Find("PlotTitleContainer");
+                plotTitle = new GameObject("plotTitle");
+                plotTitle.transform.SetParent(plotTitleContainer);
 
                 var rt = plotTitle.AddComponent<RectTransform>();
                 rt.anchorMin = Vector2.zero;
@@ -112,15 +115,18 @@ namespace StatsMod {
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
-                var txt = plotTitle.AddComponent<HGTextMeshProUGUI>();
-                plotTitle.AddComponent<RoR2.UI.LanguageTextMeshController>();
-                txt.text = "meow";
+                HGTextMeshProUGUI txt = plotTitle.AddComponent<HGTextMeshProUGUI>();
                 txt.color = Color.white;
                 txt.fontSize = 8;
                 txt.alignment = TextAlignmentOptions.Center;
-                txt.transform.localPosition = new Vector3(0, 450, 0); 
+                txt.transform.localPosition = new Vector3(0, 450, 0);
                 txt.transform.localScale = new Vector3(10, 10, 10);
                 txt.raycastTarget = false;
+
+                plotTitle.SetActive(false); // to stop awake from firing before it has a token
+                LanguageTextMeshController languageTextMeshController = plotTitle.AddComponent<RoR2.UI.LanguageTextMeshController>();
+                languageTextMeshController.token = "";
+                plotTitle.SetActive(true); // stupid
 
                 // creation of the r script button
                 CreateRScriptButton(panel);
@@ -128,17 +134,17 @@ namespace StatsMod {
                 // creation of the close button
                 CreateCloseButton(panel, obj);
 
-                PlotStartingStat();
-
             } else {
                 Log.Warning("CurrentHud is null!");
             }
         }
 
         private static void PlotStartingStat() {
-            // the first plot doesn't have lines for some reason
-            // instead of understanding and fixing this, what if plot on start......
             graph.GetComponent<GraphHandler>().PlotStat("maxHealth", -1);
+        }
+
+        public static void ChangePlotTitle(string statName) {
+            plotTitle.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>().token = $"STATSMOD_STAT_TITLE_{statName}";
         }
 
         public static void CreatePlayerPlotButtons(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat) {

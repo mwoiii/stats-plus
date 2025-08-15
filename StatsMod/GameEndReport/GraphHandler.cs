@@ -1,9 +1,6 @@
-﻿using IL.RoR2.UI;
-using StatsMod.CustomStats;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
@@ -37,12 +34,12 @@ namespace StatsMod {
 
             ResetGraph();
             UpdateGraph();
+            UpdateContent();
 
             Single smallestY = -5f;
             Single largestY = 5f;
 
-            // change plotTitle
-            graph.Find("plotTitle").GetComponentInChildren<RoR2.UI.LanguageTextMeshController>().token = $"STATSMOD_STAT_TITLE_{statName}";
+            StatsScreen.ChangePlotTitle(statName);
 
             List<object> timestamps = RecordHandler.independentDatabase[0].GetStatSeries("timestamps");
             if (index >= 0) {
@@ -52,7 +49,7 @@ namespace StatsMod {
                 List<object> stat = RecordHandler.independentDatabase[index].GetStatSeries(statName);
                 for (int i = 0; i < timestamps.Count; i++) {
                     float x = Convert.ToSingle(timestamps[i]);
-                    
+
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                     if (log && y != 0) { y = (float)Math.Log10(Math.Abs(y)); }
 
@@ -72,9 +69,9 @@ namespace StatsMod {
                     List<object> stat = entry.GetStatSeries(statName);
                     for (int i = 0; i < timestamps.Count; i++) {
                         float x = Convert.ToSingle(timestamps[i]);
-                        
+
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
-                        if (log && y!=0 ) { y = (float)Math.Log10(Math.Abs(y)); }
+                        if (log && y != 0) { y = (float)Math.Log10(Math.Abs(y)); }
 
                         if (i == 0) {
                             GS.LineColor = Color.clear;
@@ -95,7 +92,7 @@ namespace StatsMod {
             float yOffset = math.max(math.abs(smallestY), math.abs(largestY)) * 0.05f;
 
             SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count - 1]) + xOffset, largestY + yOffset));
-            UpdateGraph();         
+            UpdateGraph();
         }
 
         private void ResetGraph() {
@@ -743,9 +740,7 @@ namespace StatsMod {
             }
 
             // coordinate text display on hover
-            if (points[pointIndex].transform.childCount > 0) { Destroy(points[pointIndex].transform.GetChild(0).gameObject); }
-            else
-            {
+            if (points[pointIndex].transform.childCount > 0) { Destroy(points[pointIndex].transform.GetChild(0).gameObject); } else {
                 var coordinateDisplay = new GameObject("coordinateDisplay");
                 coordinateDisplay.transform.SetParent(points[pointIndex].transform, false);
 
@@ -908,13 +903,10 @@ namespace StatsMod {
             }
 
             // seconds label - relies on blank negative x labels
-            if (xAxisTexts.Count >= 2)
-            {
-                for (int point = 1; point < xAxisTexts.Count; point++)
-                {
-                    if (xAxisTexts[point-1].text == "" && xAxisTexts[point].text != "")
-                    {
-                        xAxisTexts[point-1].text = "seconds";
+            if (xAxisTexts.Count >= 2) {
+                for (int point = 1; point < xAxisTexts.Count; point++) {
+                    if (xAxisTexts[point - 1].text == "" && xAxisTexts[point].text != "") {
+                        xAxisTexts[point - 1].text = "seconds";
                         break;
                     }
                 }
