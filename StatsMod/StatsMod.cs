@@ -1,8 +1,8 @@
 using BepInEx;
 using R2API.Networking;
 using StatsMod.CustomStats;
-using UnityEngine.Networking;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace StatsMod {
 
@@ -21,6 +21,7 @@ namespace StatsMod {
             instance = this;
             pluginInfo = Info;
             Log.Init(Logger);
+            StatTokens.Init();
             NetworkingAPI.RegisterMessageType<SyncDatabase>();
             Assets.PopulateAssets();
             Tracker.Init();
@@ -29,8 +30,7 @@ namespace StatsMod {
         }
 
         private void Update() {
-            if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active)
-            {
+            if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) {
                 Log.Info(RecordHandler.GetRScript());
             }
             /*   

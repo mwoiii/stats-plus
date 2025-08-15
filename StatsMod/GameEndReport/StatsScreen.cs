@@ -1,5 +1,6 @@
 ﻿using LeTai.Asset.TranslucentImage;
 using RoR2;
+using RoR2.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -70,13 +71,20 @@ namespace StatsMod {
                 GameObject emptyContainer = content.Find("StatContainer").gameObject;
 
                 foreach (string stat in PlayerStatsDatabase.allStats) {
+                    // make new container
                     GameObject statContainer = Object.Instantiate(emptyContainer, content);
 
+                    // configure the header
                     GameObject statsHeader = Object.Instantiate(gameEndPrefab.transform.Find("SafeArea (JUICED)/BodyArea/StatsAndChatArea/StatsContainer/Stats And Player Nav/Stats Header").gameObject, statContainer.transform.Find("TitleContainer"));
                     RoR2.UI.LanguageTextMeshController labelText = statsHeader.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
                     if (labelText) {
-                        labelText.token = $"<size=50px>{stat}";
+                        labelText.token = $"{StatTokens.titlePrefix}{stat}";
                     }
+                    TooltipProvider toolTip = statsHeader.AddComponent<TooltipProvider>();
+                    toolTip.titleToken = $"STATSMOD_STAT_TITLE_{stat}";
+                    toolTip.bodyToken = $"STATSMOD_STAT_BODY_{stat}";
+                    toolTip.titleColor = Color.gray;
+                    toolTip.bodyColor = Color.white;
 
                     // individual player buttons
                     CreatePlayerPlotButtons(statContainer, labelText, stat);
@@ -118,6 +126,7 @@ namespace StatsMod {
         public static void CreatePlayerPlotButtons(GameObject statContainer, RoR2.UI.LanguageTextMeshController labelText, string stat) {
             // get reference before The Reckoning
             Transform tempButtonHolder = statContainer.transform.Find("ButtonHolder");
+
             int index = 0;
             foreach (IndependentEntry entry in RecordHandler.independentDatabase) {
                 CreateStatPlotButton(statContainer, labelText, stat, index, entry.playerName);
