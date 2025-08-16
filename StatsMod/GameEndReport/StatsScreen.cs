@@ -234,7 +234,7 @@ namespace StatsMod {
             logStatButton.GetComponent<LayoutElement>().preferredWidth = 20f;
             labelText = logStatButton.GetComponentInChildren<RoR2.UI.LanguageTextMeshController>();
             if (labelText) {
-                labelText.token = "<color=#999999>log10</color>";
+                labelText.token = $"<color=#999999>log<sub>{graph.GetComponent<GraphHandler>().logBase}</sub></color>";
             }
 
             RoR2.UI.HGButton logbutton = logStatButton.GetComponent<RoR2.UI.HGButton>();

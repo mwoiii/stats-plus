@@ -1,11 +1,14 @@
-﻿using System;
+﻿using StatsMod.CustomStats;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using static RoR2.EOSStatManager;
 using Image = UnityEngine.UI.Image;
 
 namespace StatsMod {
@@ -28,7 +31,7 @@ namespace StatsMod {
             UpdateGraphInternal(UpdateMethod.All);
         }
 
-        public void PlotStat(string statName, int index, bool log = false) {
+        public void PlotStat(string statName, int index, bool isLog = false) {
             // something about there being points on the same y or x and y makes the graph very upset so we add a very small offset for new graphs
             // ^ 1 year later what is he talking about
 
@@ -38,6 +41,8 @@ namespace StatsMod {
 
             Single smallestY = -5f;
             Single largestY = 5f;
+
+            currentPlotIsLog = isLog;
 
             StatsScreen.ChangePlotTitle(statName);
 
@@ -51,7 +56,11 @@ namespace StatsMod {
                     float x = Convert.ToSingle(timestamps[i]);
 
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
-                    if (log && y != 0) { y = (float)Math.Log10(Math.Abs(y)); }
+                    if (currentPlotIsLog && y != 0)
+                    {
+                        trueYvalues.Add(y);
+                        y = (float)Math.Log(Math.Abs(y), logBase);
+                    }
 
                     CreatePoint(new Vector2(x, y));
                     if (y < smallestY) {
@@ -71,7 +80,7 @@ namespace StatsMod {
                         float x = Convert.ToSingle(timestamps[i]);
 
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
-                        if (log && y != 0) { y = (float)Math.Log10(Math.Abs(y)); }
+                        if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
 
                         if (i == 0) {
                             GS.LineColor = Color.clear;
@@ -114,6 +123,7 @@ namespace StatsMod {
 
         private Vector2 contentScale = Vector2.zero;
         private List<Vector2> values;
+        private List<float> trueYvalues;
         public List<Vector2> Values { get { return values; } }
         private List<int> sortedIndices;
         private Vector2Int xAxisRange = new Vector2Int(-1, -1);
@@ -221,6 +231,9 @@ namespace StatsMod {
         private float timeToUpdateScroll = 0;
         private bool error;
 
+        private bool currentPlotIsLog = false;
+        public readonly int logBase = 2; // change log base by changing this ONLY
+
         private void Awake() {
             On.RoR2.SettingsConVars.ResolutionConVar.SetString += ResizeGraph;
             AwakeWOHook();
@@ -228,6 +241,7 @@ namespace StatsMod {
 
         private void AwakeWOHook() {
             values = new List<Vector2>();
+            trueYvalues = new List<float>();
             sortedIndices = new List<int>();
             points = new List<GameObject>();
             pointRects = new List<RectTransform>();
@@ -749,9 +763,12 @@ namespace StatsMod {
                 rt.anchorMax = Vector2.one;
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+                rt.localPosition += new Vector3(0, 25, 0);
 
                 var actualText = coordinateDisplay.gameObject.AddComponent<TextMeshProUGUI>();
-                actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {values[pointIndex].y}";
+                if (currentPlotIsLog) { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}"; }
+                else { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {values[pointIndex].y}"; }
+                
                 actualText.color = Color.white;
                 actualText.fontSize = 30;
                 actualText.alignment = TextAlignmentOptions.Center;
@@ -932,6 +949,8 @@ namespace StatsMod {
                     UpdateSizeDelta(yAxisTextRects[i - 1], new Vector2(1f / spacing.x * contentScale.x, GS.XAxisTextSize));
                     UpdateAnchoredPosition(yAxisTextRects[i - 1], new Vector2(-center.x * contentScale.x + GS.YAxisTextOffset, 0));
                     yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.RoundToInt(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
+                    // if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{Math.Pow(logBase, float.Parse(yAxisTexts[i - 1].text))}"; } // alternative y axis labelling for log transform
+                    if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{logBase}<sup>{yAxisTexts[i - 1].text}</sup>"; } // power notation y axis labeeling for log transform
                 }
             }
             for (int i = requiredXGridlines; i < xGridRects.Count; i++) {
