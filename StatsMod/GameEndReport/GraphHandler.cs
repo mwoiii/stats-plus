@@ -56,9 +56,9 @@ namespace StatsMod {
                     float x = Convert.ToSingle(timestamps[i]);
 
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    trueYvalues.Add(y);
                     if (currentPlotIsLog && y != 0)
                     {
-                        trueYvalues.Add(y);
                         y = (float)Math.Log(Math.Abs(y), logBase);
                     }
 
@@ -80,9 +80,9 @@ namespace StatsMod {
                         float x = Convert.ToSingle(timestamps[i]);
 
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                        trueYvalues.Add(y);
                         if (currentPlotIsLog && y != 0)
                         {
-                            trueYvalues.Add(y);
                             y = (float)Math.Log(Math.Abs(y), logBase);
                         }
 
