@@ -80,7 +80,11 @@ namespace StatsMod {
                         float x = Convert.ToSingle(timestamps[i]);
 
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
-                        if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
+                        if (currentPlotIsLog && y != 0)
+                        {
+                            trueYvalues.Add(y);
+                            y = (float)Math.Log(Math.Abs(y), logBase);
+                        }
 
                         if (i == 0) {
                             GS.LineColor = Color.clear;
@@ -667,7 +671,7 @@ namespace StatsMod {
                     (currentValue > bounds.y && prevValue > bounds.y && nextValue > bounds.y)) {
                     continue;
                 }
-                UpdateAnchoredPosition(pointOutlineRects[index], CalculatePosition(i));
+                UpdateAnchoredPosition(pointOutlineRects[i], CalculatePosition(i)); // [[GO NUTS]]?? I WOULDN'T!! I'M [Happy]!!
                 if (lines.Count > 0 && index < lines.Count) {
                     Vector2 point1 = CalculatePosition(index);
                     Vector2 point2 = CalculatePosition(index + 1);
