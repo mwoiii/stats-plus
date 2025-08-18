@@ -57,10 +57,8 @@ namespace StatsMod {
 
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                     trueYvalues.Add(y);
-                    if (currentPlotIsLog && y != 0)
-                    {
-                        y = (float)Math.Log(Math.Abs(y), logBase);
-                    }
+                    if (y.ToString() == "Infinity") { y = -1; }
+                    if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
 
                     CreatePoint(new Vector2(x, y));
                     if (y < smallestY) {
@@ -81,10 +79,8 @@ namespace StatsMod {
 
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                         trueYvalues.Add(y);
-                        if (currentPlotIsLog && y != 0)
-                        {
-                            y = (float)Math.Log(Math.Abs(y), logBase);
-                        }
+                        if (y.ToString() == "Infinity") { y = -1; }
+                        if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
 
                         if (i == 0) {
                             GS.LineColor = Color.clear;
@@ -771,7 +767,7 @@ namespace StatsMod {
 
                 var actualText = coordinateDisplay.gameObject.AddComponent<TextMeshProUGUI>();
                 if (currentPlotIsLog) { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}"; }
-                else { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {values[pointIndex].y}"; }
+                else { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}"; }
                 
                 actualText.color = Color.white;
                 actualText.fontSize = 30;
