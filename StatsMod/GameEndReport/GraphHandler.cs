@@ -1,14 +1,11 @@
-﻿using StatsMod.CustomStats;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static RoR2.EOSStatManager;
 using Image = UnityEngine.UI.Image;
 
 namespace StatsMod {
@@ -348,10 +345,9 @@ namespace StatsMod {
             if (canvas == null) {
                 canvas = new GameObject("GraphCanvas").AddComponent<Canvas>();
                 canvas.gameObject.SetActive(false);
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.gameObject.AddComponent<GraphicRaycaster>();
             }
-
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.gameObject.AddComponent<GraphicRaycaster>();
 
             if (GetComponent<RectTransform>() == null)
                 this.gameObject.AddComponent<RectTransform>();
@@ -771,9 +767,12 @@ namespace StatsMod {
                 rt.localPosition += new Vector3(0, 25, 0);
 
                 var actualText = coordinateDisplay.gameObject.AddComponent<TextMeshProUGUI>();
-                if (currentPlotIsLog) { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}"; }
-                else { actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}"; }
-                
+                if (currentPlotIsLog) {
+                    actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}";
+                } else {
+                    actualText.text = $"{Math.Round(values[pointIndex].x, 0)}, {trueYvalues[pointIndex]}";
+                }
+
                 actualText.color = Color.white;
                 actualText.fontSize = 30;
                 actualText.alignment = TextAlignmentOptions.Center;

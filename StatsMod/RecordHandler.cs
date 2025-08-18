@@ -1,25 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using RoR2;
 using StatsMod.CustomStats;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using RoR2;
-using R2API.Networking;
-using System.Security.Principal;
-using R2API.Networking.Interfaces;
-using static Facepunch.Steamworks.LobbyList.Filter;
-using Newtonsoft.Json;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine;
-namespace StatsMod
-{
-    public static class RecordHandler
-    {
-        public static List<PlayerStatsDatabase> statsDatabase
-        {
+namespace StatsMod {
+    public static class RecordHandler {
+        public static List<PlayerStatsDatabase> statsDatabase {
             get { return _statsDatabase; }
         }
 
@@ -29,16 +17,14 @@ namespace StatsMod
 
         private static int bodiesCounter = 0;
 
-        public static void Init()
-        {
+        public static void Init() {
             Run.onRunStartGlobal += ResetDatabase;
             SceneExitController.onBeginExit += NextStageBodyReset;
             Run.onServerGameOver += GameOverReport;
             NetworkUser.onNetworkUserLost += DeleteUserRecord;
         }
 
-        private static void DeleteUserRecord(NetworkUser networkUser)
-        {
+        private static void DeleteUserRecord(NetworkUser networkUser) {
             if (!NetworkServer.active || networkUser.masterController is null) { return; }
 
             statsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
@@ -60,14 +46,11 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
-            if (self.isPlayerControlled)
-            {
+            if (self.isPlayerControlled) {
                 bodiesCounter++;
-                if (bodiesCounter == statsDatabase.Count)
-                {
+                if (bodiesCounter == statsDatabase.Count) {
                     CharacterBody.onBodyStartGlobal -= CheckTakeRecord; // Avoids this method being called after a record has been made for the stage
-                    if (SceneManager.GetActiveScene().name != "bazaar")
-                    {
+                    if (SceneManager.GetActiveScene().name != "bazaar") {
                         TakeRecord();
                     }
                 }
@@ -81,19 +64,16 @@ namespace StatsMod
             ResetBodyCounter();
         }
 
-        private static void CreateIndependentDatabase()
-        {
+        private static void CreateIndependentDatabase() {
             if (!NetworkServer.active) { return; }
 
             independentDatabase = [];
-            foreach (PlayerStatsDatabase i in statsDatabase)
-            {
+            foreach (PlayerStatsDatabase i in statsDatabase) {
                 independentDatabase.Add(new IndependentEntry(i.Database, i.GetPlayerName()));
             }
         }
 
-        private static void GameOverReport(Run run, GameEndingDef gameEndingDef)
-        {
+        private static void GameOverReport(Run run, GameEndingDef gameEndingDef) {
             if (!NetworkServer.active) { return; }
 
             TakeRecord();
@@ -109,8 +89,7 @@ namespace StatsMod
             if (!NetworkServer.active) { return; }
 
             _statsDatabase = [];
-            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
-            {
+            foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) {
                 statsDatabase.Add(new PlayerStatsDatabase(player));
             }
             Log.Info($"Successfully setup stats database for {statsDatabase.Count} players");
@@ -120,8 +99,7 @@ namespace StatsMod
         {
             if (!NetworkServer.active) { return; }
 
-            foreach (PlayerStatsDatabase i in statsDatabase)
-            {
+            foreach (PlayerStatsDatabase i in statsDatabase) {
                 float timestamp = i.TakeRecord();
                 Log.Info($"Successfully made record at {timestamp} for {i.GetPlayerName()}");
             }
@@ -132,12 +110,10 @@ namespace StatsMod
             if (!NetworkServer.active) { return; }
 
             StringBuilder a = new();
-            foreach (PlayerStatsDatabase i in statsDatabase)
-            {
+            foreach (PlayerStatsDatabase i in statsDatabase) {
                 a.AppendLine($"{i.GetPlayerName()}");
                 a.AppendLine(i.GetStatSeriesAsString("timestamps"));
-                foreach (string j in PlayerStatsDatabase.allStats)
-                {
+                foreach (string j in PlayerStatsDatabase.allStats) {
                     a.AppendLine(i.GetStatSeriesAsString(j));
                 }
                 a.AppendLine("");
@@ -145,10 +121,9 @@ namespace StatsMod
             Log.Info(a.ToString());
         }
 
-        public static string GetRScript()
-        {
+        public static string GetRScript() {
             CreateIndependentDatabase();
-                
+
             StringBuilder a = new(independentDatabase[0].GetStatSeriesAsString("timestamps", true));
             a.AppendLine();
 
@@ -156,23 +131,21 @@ namespace StatsMod
             string namevec = "";
             string colvec = "";
 
-            for (int u = 0; u < independentDatabase.Count; u++)
-            {
+            for (int u = 0; u < independentDatabase.Count; u++) {
                 IndependentEntry i = independentDatabase[u];
-               
-                names.Add(i.playerName);
-                
-                namevec += $"\"{i.playerName}\", ";
-                colvec += $"rainbow({independentDatabase.Count})[{u+1}], ";
 
-                foreach (string j in PlayerStatsDatabase.allStats)
-                {
+                names.Add(i.playerName);
+
+                namevec += $"\"{i.playerName}\", ";
+                colvec += $"rainbow({independentDatabase.Count})[{u + 1}], ";
+
+                foreach (string j in PlayerStatsDatabase.allStats) {
                     a.AppendLine($"player{u}.{i.GetStatSeriesAsString(j, true)}");
                 }
 
                 a.AppendLine();
             }
-            
+
             namevec = namevec.Substring(0, Math.Max(0, namevec.Length - 2));
             colvec = colvec.Substring(0, Math.Max(0, colvec.Length - 2));
             string colkey = $"legend(\"topright\", inset=c(-0.25,0), legend=c({namevec}), col = c({colvec}), lty=1, pch=1, bty=\"n\")";
@@ -180,17 +153,15 @@ namespace StatsMod
             a.AppendLine("par(xpd = TRUE, mar = c(5, 4, 4, 6))");
             a.AppendLine();
 
-            foreach (string stat in PlayerStatsDatabase.allStats)
-            {
+            foreach (string stat in PlayerStatsDatabase.allStats) {
                 string b = "";
                 for (int i = 0; i < names.Count; i++) { b += ($"player{i}.{stat}, "); }
                 b = b.Substring(0, Math.Max(0, b.Length - 2));
                 a.AppendLine($"yLimit <- c(min({b}), max({b}))");
 
                 a.AppendLine($"plot(timestamps, player0.{stat}, type = \"b\", col = rainbow({names.Count})[1], ylab = \"{stat}\", xlab = \"timestamp\", main = \"{stat}\", ylim = yLimit)");
-                for (int i = 1; i < names.Count; i++)
-                {
-                    a.AppendLine($"points(timestamps, player{i}.{stat}, type = \"b\", col=rainbow({names.Count})[{i+1}])");
+                for (int i = 1; i < names.Count; i++) {
+                    a.AppendLine($"points(timestamps, player{i}.{stat}, type = \"b\", col=rainbow({names.Count})[{i + 1}])");
                 }
                 a.AppendLine(colkey);
                 a.AppendLine();
@@ -198,8 +169,7 @@ namespace StatsMod
             return a.ToString();
         }
 
-        private static void ResetBodyCounter()
-        {
+        private static void ResetBodyCounter() {
             bodiesCounter = 0;
             CharacterBody.onBodyStartGlobal += CheckTakeRecord;
         }
