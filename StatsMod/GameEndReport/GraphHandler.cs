@@ -101,7 +101,10 @@ namespace StatsMod {
             float yOffset = math.max(math.abs(smallestY), math.abs(largestY)) * 0.05f;
 
             SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count - 1]) + xOffset, largestY + yOffset));
+            absoluteZoomPoint = Vector2.zero; //
             UpdateGraph();
+            SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count - 1]) + xOffset, largestY + yOffset)); //
+            UpdateGraph(); //
         }
 
         private void ResetGraph() {
@@ -338,6 +341,8 @@ namespace StatsMod {
                 UpdatePointOutlines();
             zoom = Vector2.Lerp(zoom, targetZoom, GS.SmoothZoomSpeed * Time.deltaTime);
             moveOffset = Vector2.Lerp(moveOffset, targetMoveOffset, GS.SmoothMoveSpeed * Time.deltaTime);
+            //zoom = targetZoom;
+            //moveOffset = targetMoveOffset;
         }
         private void PrepareGraph() {
             if (canvas == null) {
