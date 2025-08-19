@@ -1084,7 +1084,7 @@ namespace StatsMod {
             if (newBottomLeft.x < minValue || float.IsNaN(newBottomLeft.x)) {
                 newBottomLeft.x = minValue;
             }
-            if (newBottomLeft.y < float.MinValue || float.IsNaN(newBottomLeft.y)) {
+            if (newBottomLeft.y < minValue || float.IsNaN(newBottomLeft.y)) {
                 newBottomLeft.y = minValue;
             }
 
