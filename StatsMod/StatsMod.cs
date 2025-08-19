@@ -1,8 +1,6 @@
 using BepInEx;
 using R2API.Networking;
 using StatsMod.CustomStats;
-using UnityEngine;
-using UnityEngine.Networking;
 
 namespace StatsMod {
 
@@ -14,7 +12,7 @@ namespace StatsMod {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "pond";
         public const string PluginName = "StatsPlus";
-        public const string PluginVersion = "1.2.0";
+        public const string PluginVersion = "2.0.0";
         public static PluginInfo pluginInfo;
         public static StatsMod instance;
         public void Awake() {
@@ -30,9 +28,11 @@ namespace StatsMod {
         }
 
         private void Update() {
+            /*
             if (Input.GetKeyDown(KeyCode.F2) & NetworkServer.active) {
                 Log.Info(RecordHandler.GetRScript());
             }
+            */
             /*   
                else if (Input.GetKeyDown(KeyCode.F3))
                {
