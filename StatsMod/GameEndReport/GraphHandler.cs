@@ -54,7 +54,7 @@ namespace StatsMod {
 
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
 
-                    /* testing high values
+                    /*
                     if (y == float.PositiveInfinity) {
                         y = float.MaxValue;
                     }
@@ -340,29 +340,46 @@ namespace StatsMod {
             }
         }
 
+        bool rightBorderReached;
+        bool topBorderReached;
+        bool bottomBorderReached;
+        bool leftBorderReached;
+
         private bool IsWithinBounds(Vector2 zoom, Vector2 absoluteZoomPoint, Vector2 zoomPoint, Vector2 moveOffset) {
             Vector2 tempContentScale = GS.GraphScale * zoom;
             Vector2 tempContentOffset = absoluteZoomPoint - zoomPoint * tempContentScale - moveOffset;
             Vector2 tempBottomLeft = -tempContentOffset / tempContentScale;
             Vector2 tempTopRight = tempBottomLeft + GS.GraphSize / tempContentScale;
 
+            /*
             Log.Info(tempBottomLeft.x);
             Log.Info(tempBottomLeft.y);
             Log.Info(tempTopRight.x);
             Log.Info(tempTopRight.y);
-            if (
-                tempTopRight.x >= float.MaxValue ||
-                tempTopRight.y >= float.MaxValue ||
-                tempBottomLeft.x <= float.MinValue ||
-                tempBottomLeft.y <= float.MinValue ||
-                float.IsNaN(tempTopRight.x) ||
-                float.IsNaN(tempTopRight.y) ||
-                float.IsNaN(tempBottomLeft.x) ||
-                float.IsNaN(tempBottomLeft.y)
-                ) {
+            */
+
+            rightBorderReached = tempTopRight.x > float.MaxValue || float.IsNaN(tempTopRight.x);
+            topBorderReached = tempTopRight.y > float.MaxValue || float.IsNaN(tempTopRight.y);
+            bottomBorderReached = tempBottomLeft.x < float.MinValue || float.IsNaN(tempBottomLeft.x);
+            leftBorderReached = tempBottomLeft.y < float.MinValue || float.IsNaN(tempBottomLeft.y);
+
+            if (rightBorderReached || topBorderReached || bottomBorderReached || leftBorderReached) {
                 return false;
             }
             return true;
+        }
+
+
+        private bool IsSizeableDif() {
+            Vector2 tempContentScale = GS.GraphScale * targetZoom;
+            Vector2 tempContentOffset = absoluteZoomPoint - zoomPoint * tempContentScale - targetMoveOffset;
+            Vector2 tempBottomLeft = -tempContentOffset / tempContentScale;
+            Vector2 tempTopRight = tempBottomLeft + GS.GraphSize / tempContentScale;
+
+            if ((TopRight - tempTopRight).magnitude > 100000000000f || (BottomLeft - tempBottomLeft).magnitude > 100000000000f) {
+                return true;
+            }
+            return false;
         }
 
         private void OnDestroy() {
@@ -414,8 +431,11 @@ namespace StatsMod {
                 UpdatePointOutlines();
             zoom = Vector2.Lerp(zoom, targetZoom, GS.SmoothZoomSpeed * Time.deltaTime);
             moveOffset = Vector2.Lerp(moveOffset, targetMoveOffset, GS.SmoothMoveSpeed * Time.deltaTime);
-            //zoom = targetZoom;
-            //moveOffset = targetMoveOffset;
+
+            if (IsSizeableDif()) {
+                zoom = targetZoom;
+                moveOffset = targetMoveOffset;
+            }
         }
         private void PrepareGraph() {
             if (canvas == null) {
@@ -519,7 +539,7 @@ namespace StatsMod {
             new { Type = EventTriggerType.PointerEnter, Callback = (Action) (() => MouseTrigger(i, true)) },
             new { Type = EventTriggerType.PointerExit, Callback = (Action) (() => MouseTrigger(i, false)) },
             new { Type = EventTriggerType.PointerClick, Callback = (Action) (() => PointClicked(i)) }
-        };
+            };
             foreach (var eventType in eventTypes) {
                 EventTrigger.Entry entry = new EventTrigger.Entry { eventID = eventType.Type };
                 entry.callback.AddListener((data) => { eventType.Callback(); });
@@ -1059,7 +1079,25 @@ namespace StatsMod {
             return new Vector2(closestX, closestY) * GS.GridSpacing;
         }
         private void SetCornerValuesInternal(Vector2 newBottomLeft, Vector2 newTopRight) {
+            const float minValue = -2.5e+38f;
+            const float maxValue = 2.5e+38f;
+            if (newBottomLeft.x < minValue || float.IsNaN(newBottomLeft.x)) {
+                newBottomLeft.x = minValue;
+            }
+            if (newBottomLeft.y < float.MinValue || float.IsNaN(newBottomLeft.y)) {
+                newBottomLeft.y = minValue;
+            }
+
+            if (newTopRight.x > maxValue || float.IsNaN(newTopRight.x)) {
+                newTopRight.x = maxValue;
+            }
+            if (newTopRight.y > maxValue || float.IsNaN(newTopRight.y)) {
+                newTopRight.y = maxValue;
+            }
+
+
             Vector2 newCenter = (newTopRight - newBottomLeft) / 2f + newBottomLeft;
+
             targetMoveOffset = (newCenter - center) * contentScale + moveOffset;
 
             ChangeZoomPoint(newCenter);
