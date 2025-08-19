@@ -53,6 +53,13 @@ namespace StatsMod {
                     float x = Convert.ToSingle(timestamps[i]);
 
                     float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+
+                    /* testing high values
+                    if (y == float.PositiveInfinity) {
+                        y = float.MaxValue;
+                    }
+                    */
+
                     trueYvalues.Add(y);
                     if (y.ToString() == "Infinity") { y = -1; }
                     if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
@@ -216,14 +223,58 @@ namespace StatsMod {
         private Vector2 previousMousePos;
         private Vector2 initialMousePos = Vector2.zero;
         private bool initialMouseInsideBounds = false;
-        private Vector2 zoomPoint = Vector2.zero;
-        private Vector2 absoluteZoomPoint = Vector2.zero;
 
-        public Vector2 targetZoom = new Vector2(1f, 1f);
+        private Vector2 _zoomPoint = Vector2.zero;
+        private Vector2 zoomPoint {
+            get {
+                return _zoomPoint;
+            }
+            set {
+                if (IsWithinBounds(zoom, absoluteZoomPoint, value, moveOffset)) {
+                    _zoomPoint = value;
+                };
+            }
+        }
+
+        private Vector2 _absoluteZoomPoint = Vector2.zero;
+        private Vector2 absoluteZoomPoint {
+            get {
+                return _absoluteZoomPoint;
+            }
+            set {
+                if (IsWithinBounds(zoom, value, zoomPoint, moveOffset)) {
+                    _absoluteZoomPoint = value;
+                };
+            }
+        }
+
+        private Vector2 _targetZoom = new Vector2(1f, 1f);
+        public Vector2 targetZoom {
+            get {
+                return _targetZoom;
+            }
+            set {
+                if (IsWithinBounds(value, absoluteZoomPoint, zoomPoint, moveOffset)) {
+                    _targetZoom = value;
+                }
+            }
+        }
+
         private Vector2 zoom = new Vector2(1f, 1f);
 
         private Vector2 moveOffset;
-        public Vector2 targetMoveOffset;
+        public Vector2 _targetMoveOffset;
+        public Vector2 targetMoveOffset {
+            get {
+                return _targetMoveOffset;
+            }
+            set {
+                if (IsWithinBounds(zoom, absoluteZoomPoint, zoomPoint, value)) {
+                    _targetMoveOffset = value;
+                };
+            }
+        }
+
         private Vector2 initialMoveOffset = Vector2.zero;
 
         private float timeToUpdateMouse = 0;
@@ -287,6 +338,31 @@ namespace StatsMod {
                 graph.localPosition = new Vector2(0.1302f * width, 0.0212f * height);
                 UpdateOutlines();
             }
+        }
+
+        private bool IsWithinBounds(Vector2 zoom, Vector2 absoluteZoomPoint, Vector2 zoomPoint, Vector2 moveOffset) {
+            Vector2 tempContentScale = GS.GraphScale * zoom;
+            Vector2 tempContentOffset = absoluteZoomPoint - zoomPoint * tempContentScale - moveOffset;
+            Vector2 tempBottomLeft = -tempContentOffset / tempContentScale;
+            Vector2 tempTopRight = tempBottomLeft + GS.GraphSize / tempContentScale;
+
+            Log.Info(tempBottomLeft.x);
+            Log.Info(tempBottomLeft.y);
+            Log.Info(tempTopRight.x);
+            Log.Info(tempTopRight.y);
+            if (
+                tempTopRight.x >= float.MaxValue ||
+                tempTopRight.y >= float.MaxValue ||
+                tempBottomLeft.x <= float.MinValue ||
+                tempBottomLeft.y <= float.MinValue ||
+                float.IsNaN(tempTopRight.x) ||
+                float.IsNaN(tempTopRight.y) ||
+                float.IsNaN(tempBottomLeft.x) ||
+                float.IsNaN(tempBottomLeft.y)
+                ) {
+                return false;
+            }
+            return true;
         }
 
         private void OnDestroy() {
@@ -623,6 +699,7 @@ namespace StatsMod {
                 UpdateGridLines();
         }
         private void UpdatePositionAndScale() {
+
             contentScale = GS.GraphScale * zoom;
             maskObj.sizeDelta = GS.GraphSize;
             contentOffset = absoluteZoomPoint - zoomPoint * contentScale - moveOffset;
@@ -630,6 +707,8 @@ namespace StatsMod {
             graph.sizeDelta = GS.GraphSize;
             backgroundRect.sizeDelta = GS.GraphSize;
             backgroundImage.color = GS.BackgroundColor;
+
+
         }
         private void UpdateOutlines() {
             for (int i = 0; i < outlines.Count; i++) {
@@ -889,9 +968,15 @@ namespace StatsMod {
             Vector2 GridStartPoint;
             Vector2 spacing = CalculateGridSpacing();
             GridStartPoint = new Vector2(Mathf.Ceil(bottomLeft.x * spacing.x) / spacing.x, Mathf.Ceil(bottomLeft.y * spacing.y) / spacing.y) * contentScale;
-            int2 eventualOverlay = new int2(-1, -1);
+            Vector2 eventualOverlay = new Vector2(-1, -1);
             int requiredYGridlines = Mathf.CeilToInt((topRight.y - bottomLeft.y) * spacing.y) + 1;
             int requiredXGridlines = Mathf.CeilToInt((topRight.x - bottomLeft.x) * spacing.x) + 1;
+            if (requiredXGridlines < 0) {
+                requiredXGridlines = 7;
+            }
+            if (requiredYGridlines < 0) {
+                requiredYGridlines = 7;
+            }
             while (xGridRects.Count <= requiredXGridlines) {
                 CreateGridLines(true);
             }
@@ -918,7 +1003,7 @@ namespace StatsMod {
                     UpdateAnchoredPosition(rect, new Vector2(GridStartPoint.x + (i + eventualOverlay.x) / spacing.x * contentScale.x, center.y * contentScale.y));
                     UpdateSizeDelta(xAxisTextRects[i - 1], new Vector2(1f / spacing.x * contentScale.x, GS.XAxisTextSize));
                     UpdateAnchoredPosition(xAxisTextRects[i - 1], new Vector2(0, -center.y * contentScale.y + GS.XAxisTextOffset));
-                    xAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.x) > 0 ? Mathf.RoundToInt(GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString() : (GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString("R");
+                    xAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.x) > 0 ? Mathf.Round(GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString() : (GridStartPoint.x / contentScale.x + (i + eventualOverlay.x) / spacing.x).ToString("R");
                     if (xAxisTexts[i - 1].text[0] == '-') { xAxisTexts[i - 1].text = ""; } // blanks negative x axis labels
                 }
             }
@@ -952,7 +1037,7 @@ namespace StatsMod {
                     UpdateAnchoredPosition(rect, new Vector2(center.x * contentScale.x, GridStartPoint.y + (i + eventualOverlay.y) / spacing.y * contentScale.y));
                     UpdateSizeDelta(yAxisTextRects[i - 1], new Vector2(1f / spacing.x * contentScale.x, GS.XAxisTextSize));
                     UpdateAnchoredPosition(yAxisTextRects[i - 1], new Vector2(-center.x * contentScale.x + GS.YAxisTextOffset, 0));
-                    yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.RoundToInt(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
+                    yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.Round(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
                     // if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{Math.Pow(logBase, float.Parse(yAxisTexts[i - 1].text))}"; } // alternative y axis labelling for log transform
                     if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{logBase}<sup>{yAxisTexts[i - 1].text}</sup>"; } // power notation y axis labeeling for log transform
                 }
@@ -995,8 +1080,10 @@ namespace StatsMod {
             targetZoom = zoom + Input.mouseScrollDelta.y * zoom * GS.ZoomSpeed / 100f;
         }
         private void ChangeZoomPoint(Vector2 newZoomPoint) {
-            absoluteZoomPoint = (newZoomPoint - zoomPoint) * contentScale + absoluteZoomPoint;
-            zoomPoint = newZoomPoint;
+            if (IsWithinBounds(zoom, (newZoomPoint - zoomPoint) * contentScale + absoluteZoomPoint, newZoomPoint, moveOffset)) {
+                absoluteZoomPoint = (newZoomPoint - zoomPoint) * contentScale + absoluteZoomPoint;
+                zoomPoint = newZoomPoint;
+            }
         }
 
         private void MouseAction() {
