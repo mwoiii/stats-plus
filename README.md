@@ -11,11 +11,5 @@ Additionally, if you want to immortalise your run, you can use the R script gene
 
 <img src="https://github.com/mwoiii/stats-plus/blob/main/mdassets/statspage.gif?raw=true" width="450px" title="StatsPlus HTML page">
 
-### Known issues / improvements
-- Some stats have vague names, and stats do not have a description.
-- The in-game graph can sometimes break if large enough numbers are plotted.
-- Multiple plots cannot be on the in-game graph at once.
-- The first time a plot is created, the first point might not draw correctly.
-
 ### Installation
 [Install from Thunderstore with r2modman](https://thunderstore.io/package/pond/StatsPlus/)
