@@ -75,7 +75,7 @@
             Language.Add(bodyPrefix + "totalItemsCollected", "Each player's total amount of items.");
 
             Language.Add(titlePrefix + "totalDistanceTraveled", "Total Distance Traveled");
-            Language.Add(bodyPrefix + "totalDistanceTraveled", "The distance that each individual player covered, in metres.");
+            Language.Add(bodyPrefix + "totalDistanceTraveled", "The distance that each individual player covered, in marathons.");
 
             Language.Add(titlePrefix + "totalPurchases", "Total Purchases");
             Language.Add(bodyPrefix + "totalPurchases", "The total amount of interactable purchases made by each player");
