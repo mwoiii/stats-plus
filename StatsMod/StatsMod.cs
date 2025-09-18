@@ -1,4 +1,5 @@
 using BepInEx;
+using R2API;
 using R2API.Networking;
 using StatsMod.CustomStats;
 
@@ -6,13 +7,15 @@ namespace StatsMod {
 
     [BepInDependency(NetworkingAPI.PluginGUID)]
 
+    [BepInDependency(LanguageAPI.PluginGUID)]
+
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 
     public class StatsMod : BaseUnityPlugin {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "pond";
         public const string PluginName = "StatsPlus";
-        public const string PluginVersion = "2.0.0";
+        public const string PluginVersion = "2.0.1";
         public static PluginInfo pluginInfo;
         public static StatsMod instance;
         public void Awake() {
