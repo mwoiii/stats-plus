@@ -328,7 +328,7 @@ namespace StatsMod {
 
         #region private methods
 
-        private void ResizeGraph(On.RoR2.SettingsConVars.ResolutionConVar.orig_SetString orig, RoR2.ConVar.BaseConVar self, string newValue) {
+        private void ResizeGraph(On.RoR2.SettingsConVars.ResolutionConVar.orig_SetString orig, RoR2.SettingsConVars.ResolutionConVar self, string newValue) {
             orig(self, newValue);
             if (graph != null) {
                 string[] array = newValue.Split('x');

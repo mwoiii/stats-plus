@@ -12,7 +12,7 @@ namespace StatsMod.CustomStats
     internal class ChainableProcs // : Stat
     {
         private static Dictionary<PlayerCharacterMasterController, uint> chainableProcsDict = [];  // The total number of times a player proc'd a vanilla item that can contribute to a proc chain
-        new public static void Init()
+        public static void Init()
         {
             IL.RoR2.GlobalEventManager.OnHitEnemy += chainableProcTrack;
 

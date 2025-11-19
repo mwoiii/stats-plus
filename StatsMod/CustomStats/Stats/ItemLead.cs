@@ -28,9 +28,7 @@ namespace StatsMod.CustomStats
             foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
             {
                 itemLeadDict[player] = 0;
-#pragma warning disable Publicizer001
-                uint playerItems = (uint)player.master.inventory.itemStacks.Sum();
-#pragma warning restore Publicizer001
+                uint playerItems = (uint)player.master.inventory.permanentItemStacks.GetTotalItemStacks();
                 if (playerItems > highestItems)
                 {
                     highestLead = playerItems - highestItems;

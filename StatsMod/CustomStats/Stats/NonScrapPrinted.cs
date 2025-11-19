@@ -16,30 +16,36 @@ namespace StatsMod.CustomStats {
 
         private static void NonScrapTrack(ILContext il) {
             ILCursor c = new ILCursor(il);
-            c.GotoNext(
-                x => x.MatchLdloc(13),
-                x => x.MatchLdloc(2),
+            int itemIndexLoc = 20;
+            if (c.TryGotoNext(
+                x => x.MatchLdloc(out itemIndexLoc),
+                x => x.MatchLdfld<Inventory.ItemAndStackValues>("itemIndex"),
+                x => x.MatchLdloc(out _),
                 x => x.MatchBeq(out var _)
-                );
-            c.Emit(OpCodes.Ldloc_0);
-            c.Emit(OpCodes.Ldloc, 13);
-            c.EmitDelegate<Action<CharacterBody, ItemIndex>>((interactorBody, item) => {
-                ItemDef itemDef = ItemCatalog.GetItemDef(item);
-                ItemDef[] itemBlacklist = {
+                )) {
+
+                c.Emit(OpCodes.Ldloc_0);
+                c.Emit(OpCodes.Ldloc, itemIndexLoc);
+                c.EmitDelegate<Action<CharacterBody, Inventory.ItemAndStackValues>>((interactorBody, item) => {
+                    ItemDef itemDef = ItemCatalog.GetItemDef(item.itemIndex);
+                    ItemDef[] itemBlacklist = {
                     RoR2Content.Items.ScrapWhite,
                     RoR2Content.Items.ScrapGreen,
                     RoR2Content.Items.ScrapRed,
                     RoR2Content.Items.ScrapYellow,
                     DLC1Content.Items.RegeneratingScrap
                 };
-                if (!itemBlacklist.Contains(itemDef)) {
-                    var player = interactorBody.master.playerCharacterMasterController;
-                    if (nonScrapPrintedDict.ContainsKey(player)) { nonScrapPrintedDict[player]++; } else { nonScrapPrintedDict.Add(player, 1); }
-                }
-            });
+                    if (!itemBlacklist.Contains(itemDef)) {
+                        var player = interactorBody.master.playerCharacterMasterController;
+                        if (nonScrapPrintedDict.ContainsKey(player)) { nonScrapPrintedDict[player]++; } else { nonScrapPrintedDict.Add(player, 1); }
+                    }
+                });
+            } else {
+                Log.Error("NonScrapTrack IL hook borked.");
+            }
             /*
             CreateItemTakenOrb(component.corePosition, base.gameObject, item);
-            if (item != itemIndex) <-- matching
+            if (item.index != itemIndex) <-- matching
             {
                 < delegate emitted here >
                 PurchaseInteraction.onItemSpentOnPurchase?.Invoke(this, activator);

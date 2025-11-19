@@ -31,7 +31,7 @@ namespace StatsMod.CustomStats {
                     master.GetDeployableSameSlotLimit(DeployableSlot.BeetleGuardAlly) +
                     master.GetDeployableSameSlotLimit(DeployableSlot.ParentAlly) +
                     master.GetDeployableSameSlotLimit(DeployableSlot.VoidMegaCrabItem) +
-                    (inventory.GetItemCount(RoR2Content.Items.RoboBallBuddy) > 0 ? 2 : 0) +
+                    (inventory.GetItemCountPermanent(RoR2Content.Items.RoboBallBuddy) > 0 ? 2 : 0) +
                     droneCount
                     );
                 if (alliesDict.ContainsKey(player)) { alliesDict[player] = (uint)sum; } else { alliesDict.Add(player, (uint)sum); }

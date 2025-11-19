@@ -1,3 +1,8 @@
+## 2.0.2
+- Fix for DLC3
+  - Fix NonScrapPrinted IL hook
+  - Fix invalid ItemLead inventory references
+
 ## 2.0.1
 - README changes
 
@@ -25,5 +30,4 @@
 - Fixed nonScrapPrinted blacklisting incorrect item indexes for stat incrementation
 
 ## 1.0.0
-
-- First release
+- Initial release
