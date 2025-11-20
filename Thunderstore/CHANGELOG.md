@@ -1,3 +1,6 @@
+## 2.0.3
+- Removed UnityMathematics dll
+
 ## 2.0.2
 - Fix for DLC3
   - Fix NonScrapPrinted IL hook
