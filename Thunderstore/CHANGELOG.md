@@ -1,3 +1,7 @@
+## 2.0.4
+- R script graph titles now use formal names rather than internal names
+- You can now contact tom
+  
 ## 2.0.3
 - Removed UnityMathematics dll
 

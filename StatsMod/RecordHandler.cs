@@ -159,7 +159,7 @@ namespace StatsMod {
                 b = b.Substring(0, Math.Max(0, b.Length - 2));
                 a.AppendLine($"yLimit <- c(min({b}), max({b}))");
 
-                a.AppendLine($"plot(timestamps, player0.{stat}, type = \"b\", col = rainbow({names.Count})[1], ylab = \"{stat}\", xlab = \"timestamp\", main = \"{stat}\", ylim = yLimit)");
+                a.AppendLine($"plot(timestamps, player0.{stat}, type = \"b\", col = rainbow({names.Count})[1], ylab = \"{RoR2.Language.english.GetLocalizedStringByToken(StatTokens.titlePrefix + stat)}\", xlab = \"timestamp\", main = \"{RoR2.Language.english.GetLocalizedStringByToken(StatTokens.titlePrefix + stat)}\", ylim = yLimit)");
                 for (int i = 1; i < names.Count; i++) {
                     a.AppendLine($"points(timestamps, player{i}.{stat}, type = \"b\", col=rainbow({names.Count})[{i + 1}])");
                 }

@@ -13,3 +13,4 @@ Additionally, if you want to immortalise your run, you can use the R script gene
 
 # Contact
 Discord: miyowi
+Discord: bouncyshield

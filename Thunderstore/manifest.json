@@ -1,6 +1,6 @@
 ﻿{
 	"name": "StatsPlus",
-	"version_number": "2.0.3",
+	"version_number": "2.0.4",
 	"website_url": "https://github.com/mwoiii/stat-mod-ror2",
 	"description": "Provides insight to the progression of the run through a new panel on the results screen that can graph a variety of base-game and custom stats. Stats are recorded at key points of the run.",
 	"dependencies": [
