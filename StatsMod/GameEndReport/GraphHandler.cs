@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mime;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.UIElements.UIR;
 using Image = UnityEngine.UI.Image;
 
 namespace StatsMod {
@@ -49,10 +51,19 @@ namespace StatsMod {
                 GS.LineColor = playerColor;
                 // case where plotting a specific player
                 List<object> stat = RecordHandler.independentDatabase[index].GetStatSeries(statName);
+
+                // obtains median (Who the heck wrote this mod!!!! come back if theres a better way)
+                float[] ySet = new float[stat.Count];
+                for (int i = 0; i < timestamps.Count; i++)
+                {
+                    ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                }
+                c = median(ySet);
+                
                 for (int i = 0; i < timestamps.Count; i++) {
                     float x = Convert.ToSingle(timestamps[i]);
 
-                    float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    float y = ySet[i]; // = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
 
                     /*
                     if (y == float.PositiveInfinity) {
@@ -62,7 +73,10 @@ namespace StatsMod {
 
                     trueYvalues.Add(y);
                     if (y.ToString() == "Infinity") { y = -1; }
-                    if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
+                    if (currentPlotIsLog && y > -c)
+                    {
+                        y = (float)Math.Log(1 + y/c, logBase);
+                    }
 
                     CreatePoint(new Vector2(x, y));
                     if (y < smallestY) {
@@ -78,13 +92,29 @@ namespace StatsMod {
                     Color playerColor = GraphSettings.Rainbow((float)playerIndex / (float)RecordHandler.independentDatabase.Count);
                     GS.LineColor = playerColor;
                     List<object> stat = entry.GetStatSeries(statName);
+
+                    // uses first player median for all players for consistent log transform
+                    if (playerIndex == 0)
+                    {
+                        float[] ySet = new float[stat.Count];
+                        for (int i = 0; i < timestamps.Count; i++)
+                        {
+                            ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                        }
+                        c = median(ySet);
+                    }
+
                     for (int i = 0; i < timestamps.Count; i++) {
                         float x = Convert.ToSingle(timestamps[i]);
 
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                        
                         trueYvalues.Add(y);
                         if (y.ToString() == "Infinity") { y = -1; }
-                        if (currentPlotIsLog && y != 0) { y = (float)Math.Log(Math.Abs(y), logBase); }
+                        if (currentPlotIsLog && y > -c)
+                        {
+                            y = (float)Math.Log(1 + y / c, logBase);
+                        }
 
                         if (i == 0) {
                             GS.LineColor = Color.clear;
@@ -109,6 +139,18 @@ namespace StatsMod {
             UpdateGraph();
             SetCornerValues(new Vector2(0f - xOffset, smallestY - yOffset), new Vector2(Convert.ToSingle(timestamps[timestamps.Count - 1]) + xOffset, largestY + yOffset)); //
             UpdateGraph(); //
+        }
+
+        public static float median(float[] data)
+        {
+            if (data == null || data.Length == 0) { throw new ArgumentException("I'm coming for you"); }
+
+            var sorted = (float[])data.Clone();
+            Array.Sort(sorted);
+
+            int n = sorted.Length;
+            if (n % 2 == 1) { return sorted[n / 2]; }
+            else { return 0.5f * (sorted[n / 2 - 1] + sorted[n / 2]); }
         }
 
         private void ResetGraph() {
@@ -284,6 +326,7 @@ namespace StatsMod {
 
         private bool currentPlotIsLog = false;
         public readonly int logBase = 2; // change log base by changing this ONLY
+        private float c = 1;
 
         private void Awake() {
             On.RoR2.SettingsConVars.ResolutionConVar.SetString += ResizeGraph;
@@ -1058,8 +1101,14 @@ namespace StatsMod {
                     UpdateSizeDelta(yAxisTextRects[i - 1], new Vector2(1f / spacing.x * contentScale.x, GS.XAxisTextSize));
                     UpdateAnchoredPosition(yAxisTextRects[i - 1], new Vector2(-center.x * contentScale.x + GS.YAxisTextOffset, 0));
                     yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.Round(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
-                    // if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{Math.Pow(logBase, float.Parse(yAxisTexts[i - 1].text))}"; } // alternative y axis labelling for log transform
-                    if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{logBase}<sup>{yAxisTexts[i - 1].text}</sup>"; } // power notation y axis labeeling for log transform
+                    if (currentPlotIsLog) // alternative y axis labelling for log transform
+                    {
+                        if (int.Parse(yAxisTexts[i - 1].text) > -c)
+                        {
+                            yAxisTexts[i - 1].text = $"{(int)(c * ((Math.Pow(logBase, float.Parse(yAxisTexts[i - 1].text))) - 1))}";
+                        }
+                    }
+                    // if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{logBase}<sup>{yAxisTexts[i - 1].text}</sup>"; } // power notation y axis labeeling for log transform
                 }
             }
             for (int i = requiredXGridlines; i < xGridRects.Count; i++) {
