@@ -54,11 +54,19 @@ namespace StatsMod {
 
                 // obtains median (Who the heck wrote this mod!!!! come back if theres a better way)
                 float[] ySet = new float[stat.Count];
-                for (int i = 0; i < timestamps.Count; i++)
+                if (currentPlotIsLog)
                 {
-                    ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    for (int i = 0; i < timestamps.Count; i++)
+                    {
+                        ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    }
                 }
                 c = median(ySet);
+                if (c == 0)
+                {
+                    currentPlotIsLog = false;
+                    Log.Info("median of dataset is 0, aborting log transform");
+                }
                 
                 for (int i = 0; i < timestamps.Count; i++) {
                     float x = Convert.ToSingle(timestamps[i]);
@@ -94,7 +102,7 @@ namespace StatsMod {
                     List<object> stat = entry.GetStatSeries(statName);
 
                     // uses first player median for all players for consistent log transform
-                    if (playerIndex == 0)
+                    if (playerIndex == 0 && currentPlotIsLog)
                     {
                         float[] ySet = new float[stat.Count];
                         for (int i = 0; i < timestamps.Count; i++)
@@ -102,6 +110,11 @@ namespace StatsMod {
                             ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                         }
                         c = median(ySet);
+                        if (c == 0)
+                        {
+                            currentPlotIsLog = false;
+                            Log.Info("median of dataset is 0, aborting log transform");
+                        }
                     }
 
                     for (int i = 0; i < timestamps.Count; i++) {
