@@ -81,6 +81,12 @@ namespace StatsMod {
             return timestamp;
         }
 
+        public void RestoreFrom(Dictionary<string, List<object>> restoredDatabase)
+        {
+            Database.Clear();
+            foreach (var a in restoredDatabase) { Database[a.Key] = a.Value; }
+        }
+
         public List<object> GetStatSeries(string name) {
             return Database[name];
         }

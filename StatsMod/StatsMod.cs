@@ -5,6 +5,8 @@ using StatsMod.CustomStats;
 
 namespace StatsMod {
 
+    [BepInDependency("com.KingEnderBrine.ProperSave",BepInDependency.DependencyFlags.SoftDependency)]
+
     [BepInDependency(NetworkingAPI.PluginGUID)]
 
     [BepInDependency(LanguageAPI.PluginGUID)]

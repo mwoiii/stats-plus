@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using RoR2;
 using StatsMod.CustomStats;
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 namespace StatsMod {
@@ -22,6 +23,41 @@ namespace StatsMod {
             SceneExitController.onBeginExit += NextStageBodyReset;
             Run.onServerGameOver += GameOverReport;
             NetworkUser.onNetworkUserLost += DeleteUserRecord;
+
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.ProperSave")) { SetupProperSave(); Log.Info("We setting up Proper Save"); }
+        }
+
+        private static void SetupProperSave()
+        {
+            ProperSave.SaveFile.OnGatherSaveData += (dict) =>
+            {
+                if (statsDatabase != null)
+                {
+                    var moment = new Dictionary<string, Dictionary<string, List<object>>>();
+                    foreach (var entry in statsDatabase)
+                    {
+                        moment[entry.GetPlayerName()] = entry.Database;
+                    }
+                    dict["StatsPlus_Save"] = moment;
+                }
+
+                Log.Info("We proper saving");
+            };
+
+            ProperSave.Loading.OnLoadingEnded += (savefile) =>
+            {
+                InnerResetDatabase();
+                if (savefile.ModdedData.ContainsKey("StatsPlus_Save"))
+                {
+                    var restored = savefile.GetModdedData<Dictionary<string, Dictionary<string, List<object>>>>("StatsPlus_Save");
+                    foreach (var entry in statsDatabase)
+                    {
+                        if (restored.TryGetValue(entry.GetPlayerName(), out var a)) { entry.RestoreFrom(a); }
+                    }
+
+                    Log.Info("Loaded database from ProperSave");
+                }
+            };
         }
 
         private static void DeleteUserRecord(NetworkUser networkUser) {
@@ -34,12 +70,17 @@ namespace StatsMod {
         {
             if (!NetworkServer.active) { return; }
 
+            InnerResetDatabase();
+
+            Log.Info("New run, resetting data dicts and database");
+        }
+
+        private static void InnerResetDatabase() // For use with ProperSave
+        {
             Tracker.ResetData();
             SetupDatabase();
 
             ResetBodyCounter();
-
-            Log.Info("New run, resetting data dicts and database");
         }
 
         private static void CheckTakeRecord(CharacterBody self) // For a record to be taken at the start of each stage it is ensured that the body for each player exists
@@ -102,6 +143,7 @@ namespace StatsMod {
             foreach (PlayerStatsDatabase i in statsDatabase) {
                 float timestamp = i.TakeRecord();
                 Log.Info($"Successfully made record at {timestamp} for {i.GetPlayerName()}");
+                ReportToLog();
             }
         }
 

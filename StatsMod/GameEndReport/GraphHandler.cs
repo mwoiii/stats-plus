@@ -60,18 +60,18 @@ namespace StatsMod {
                     {
                         ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                     }
-                }
-                c = median(ySet);
-                if (c == 0)
-                {
-                    currentPlotIsLog = false;
-                    Log.Info("median of dataset is 0, aborting log transform");
+                    c = median(ySet);
+                    if (c == 0)
+                    {
+                        currentPlotIsLog = false;
+                        Log.Info("median of dataset is 0, aborting log transform");
+                    }
                 }
                 
                 for (int i = 0; i < timestamps.Count; i++) {
                     float x = Convert.ToSingle(timestamps[i]);
 
-                    float y = ySet[i]; // = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
+                    float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
 
                     /*
                     if (y == float.PositiveInfinity) {
