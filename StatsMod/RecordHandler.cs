@@ -70,6 +70,13 @@ namespace StatsMod {
         {
             if (!NetworkServer.active) { return; }
 
+            InnerResetDatabase();
+
+            Log.Info("New run, resetting data dicts and database");
+        }
+
+        private static void InnerResetDatabase() // For use with ProperSave
+        {
             Tracker.ResetData();
             SetupDatabase();
 
