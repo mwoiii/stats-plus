@@ -17,7 +17,7 @@ namespace StatsMod {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "pond";
         public const string PluginName = "StatsPlus";
-        public const string PluginVersion = "2.0.5";
+        public const string PluginVersion = "2.1.0";
         public static PluginInfo pluginInfo;
         public static StatsMod instance;
         public void Awake() {

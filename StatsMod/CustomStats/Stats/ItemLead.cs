@@ -17,7 +17,7 @@ namespace StatsMod.CustomStats
 
             Tracker.statsTable.Add("itemLead", itemLeadDict);
         }
-
+        
         private static void ItemLeadTrack(SceneExitController sceneExitController)
         {
             if (PlayerCharacterMasterController.instances.Count < 2) { return; }
@@ -29,7 +29,7 @@ namespace StatsMod.CustomStats
             {
                 itemLeadDict[player] = 0;
                 uint playerItems = (uint)player.master.inventory.permanentItemStacks.GetTotalItemStacks();
-                if (playerItems > highestItems)
+                if (playerItems >= highestItems) // Wauce
                 {
                     highestLead = playerItems - highestItems;
                     highestItems = playerItems;

@@ -12,6 +12,8 @@ namespace StatsMod {
         private readonly int playerIndex;
         private readonly string playerName;
 
+        public bool goner = false;
+
         public readonly Dictionary<string, List<object>> Database = [];
 
         // Stats that are useless/unusable ?
@@ -40,6 +42,12 @@ namespace StatsMod {
         public float TakeRecord() {
             float timestamp = Run.instance.GetRunStopwatch();
             Database["timestamps"].Add(timestamp);
+
+            if (goner)
+            {
+                foreach (string a in allStats) { Database[a].Add(Database[a].Last()); }
+                return timestamp;
+            }
 
             // Getting charBody stats
             CharacterBody CachedCharacterBody = player.master.GetBody();  // Getting reference to specific player

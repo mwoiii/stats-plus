@@ -6,6 +6,8 @@ using StatsMod.CustomStats;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using System.Linq;
+
 namespace StatsMod {
     public static class RecordHandler {
         public static List<PlayerStatsDatabase> statsDatabase {
@@ -18,13 +20,15 @@ namespace StatsMod {
 
         private static int bodiesCounter = 0;
 
+        private static bool awaitingStageRecord = true;
+
         public static void Init() {
             Run.onRunStartGlobal += ResetDatabase;
             SceneExitController.onBeginExit += NextStageBodyReset;
             Run.onServerGameOver += GameOverReport;
             NetworkUser.onNetworkUserLost += DeleteUserRecord;
 
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.ProperSave")) { SetupProperSave(); Log.Info("We setting up Proper Save"); }
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.ProperSave")) { SetupProperSave(); }
         }
 
         private static void SetupProperSave()
@@ -40,8 +44,6 @@ namespace StatsMod {
                     }
                     dict["StatsPlus_Save"] = moment;
                 }
-
-                Log.Info("We proper saving");
             };
 
             ProperSave.Loading.OnLoadingEnded += (savefile) =>
@@ -60,10 +62,18 @@ namespace StatsMod {
             };
         }
 
-        private static void DeleteUserRecord(NetworkUser networkUser) {
-            if (!NetworkServer.active || networkUser.masterController is null) { return; }
+        private static void DeleteUserRecord(NetworkUser networkUser) // Originally deleted disconnected player records, but now marks them as disconnected
+        {
+            if (!NetworkServer.active || networkUser.masterController is null || statsDatabase == null) { return; }
 
-            statsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
+            // statsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
+
+            foreach (PlayerStatsDatabase a in statsDatabase)
+            {
+                if (a.BelongsTo(networkUser.masterController)) { a.goner = true; Log.Info($"{a.GetPlayerName()} marked as disconnected"); }
+            }
+
+            InnerCheckTakeRecord();
         }
 
         private static void ResetDatabase(Run run) // Empties all the data dictionaries & sets up a new databases
@@ -89,12 +99,19 @@ namespace StatsMod {
 
             if (self.isPlayerControlled) {
                 bodiesCounter++;
-                if (bodiesCounter == statsDatabase.Count) {
-                    CharacterBody.onBodyStartGlobal -= CheckTakeRecord; // Avoids this method being called after a record has been made for the stage
-                    if (SceneManager.GetActiveScene().name != "bazaar") {
-                        TakeRecord();
-                    }
-                }
+                InnerCheckTakeRecord();
+            }
+        }
+
+        private static void InnerCheckTakeRecord() // For use in handling player disconnections
+        {
+            if (!awaitingStageRecord) { return; }
+            if (bodiesCounter < statsDatabase.Count(x => !x.goner)) { return; }
+
+            awaitingStageRecord = false;
+            CharacterBody.onBodyStartGlobal -= CheckTakeRecord; // Avoids this method being called after a record has been made for the stage
+            if (SceneManager.GetActiveScene().name != "bazaar") {
+                TakeRecord();
             }
         }
 
@@ -143,7 +160,6 @@ namespace StatsMod {
             foreach (PlayerStatsDatabase i in statsDatabase) {
                 float timestamp = i.TakeRecord();
                 Log.Info($"Successfully made record at {timestamp} for {i.GetPlayerName()}");
-                ReportToLog();
             }
         }
 
@@ -213,6 +229,7 @@ namespace StatsMod {
 
         private static void ResetBodyCounter() {
             bodiesCounter = 0;
+            awaitingStageRecord = true;
             CharacterBody.onBodyStartGlobal += CheckTakeRecord;
         }
     }

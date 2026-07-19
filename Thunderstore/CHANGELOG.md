@@ -1,7 +1,8 @@
-## 2.0.5
+## 2.1.0
 
+* ProperSave compatibility
 * Log transform now uses log(1+y/c) where c=median(y). This is a lot better than log(y)
-* ProperSave integration
+* Players who disconnected before the end screen now flatline past the point of disconnection instead of being outright removed from graphs
 
 ## 2.0.4
 
