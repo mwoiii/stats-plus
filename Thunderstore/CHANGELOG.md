@@ -1,6 +1,7 @@
 ## 2.0.5
 
 * Log transform now uses log(1+y/c) where c=median(y). This is a lot better than log(y)
+* ProperSave integration
 
 ## 2.0.4
 
@@ -30,7 +31,6 @@
 * Player names are now coloured corresponding to their graph plot colour
 
   * Uses a rainbow function so colours are always as distinct as possible
-
 * Added a log view for all graphs
 * Added x axis label
 * Added coordinates display when hovering over a point
@@ -49,9 +49,9 @@
 
   * Networking? I sure hope it does
   * Removed the chainableProcs custom stat, as it wasn't well implemented, nor was it easy to maintain
-
 * Fixed nonScrapPrinted blacklisting incorrect item indexes for stat incrementation
 
 ## 1.0.0
 
 * Initial release
+

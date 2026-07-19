@@ -29,8 +29,8 @@
       <HintPath>libs\Facepunch.Steamworks.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="MMHOOK_RoR2">
-      <HintPath>libs\MMHOOK_RoR2.dll</HintPath>
+    <Reference Include="ProperSave">
+      <HintPath>libs\ProperSave.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>libs\Unity.Mathematics.dll</HintPath>
