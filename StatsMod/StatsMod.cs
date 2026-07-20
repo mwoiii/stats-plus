@@ -5,7 +5,7 @@ using StatsMod.CustomStats;
 
 namespace StatsMod {
 
-    [BepInDependency("com.KingEnderBrine.ProperSave",BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.KingEnderBrine.ProperSave", BepInDependency.DependencyFlags.SoftDependency)]
 
     [BepInDependency(NetworkingAPI.PluginGUID)]
 
@@ -26,8 +26,8 @@ namespace StatsMod {
             Log.Init(Logger);
             StatTokens.Init();
             NetworkingAPI.RegisterMessageType<SyncDatabase>();
-            Assets.PopulateAssets();
-            Tracker.Init();
+            Assets.Init();
+            CustomStatTracker.Init();
             RecordHandler.Init();
             StatsScreen.Init();
         }

@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using UnityEngine.UIElements.UIR;
 using Image = UnityEngine.UI.Image;
 
 namespace StatsMod {
@@ -54,20 +52,17 @@ namespace StatsMod {
 
                 // obtains median (Who the heck wrote this mod!!!! come back if theres a better way)
                 float[] ySet = new float[stat.Count];
-                if (currentPlotIsLog)
-                {
-                    for (int i = 0; i < timestamps.Count; i++)
-                    {
+                if (currentPlotIsLog) {
+                    for (int i = 0; i < timestamps.Count; i++) {
                         ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                     }
                     c = median(ySet);
-                    if (c == 0)
-                    {
+                    if (c == 0) {
                         currentPlotIsLog = false;
                         Log.Info("median of dataset is 0, aborting log transform");
                     }
                 }
-                
+
                 for (int i = 0; i < timestamps.Count; i++) {
                     float x = Convert.ToSingle(timestamps[i]);
 
@@ -81,9 +76,8 @@ namespace StatsMod {
 
                     trueYvalues.Add(y);
                     if (y.ToString() == "Infinity") { y = -1; }
-                    if (currentPlotIsLog && y > -c)
-                    {
-                        y = (float)Math.Log(1 + y/c, logBase);
+                    if (currentPlotIsLog && y > -c) {
+                        y = (float)Math.Log(1 + y / c, logBase);
                     }
 
                     CreatePoint(new Vector2(x, y));
@@ -102,16 +96,13 @@ namespace StatsMod {
                     List<object> stat = entry.GetStatSeries(statName);
 
                     // uses first player median for all players for consistent log transform
-                    if (playerIndex == 0 && currentPlotIsLog)
-                    {
+                    if (playerIndex == 0 && currentPlotIsLog) {
                         float[] ySet = new float[stat.Count];
-                        for (int i = 0; i < timestamps.Count; i++)
-                        {
+                        for (int i = 0; i < timestamps.Count; i++) {
                             ySet[i] = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
                         }
                         c = median(ySet);
-                        if (c == 0)
-                        {
+                        if (c == 0) {
                             currentPlotIsLog = false;
                             Log.Info("median of dataset is 0, aborting log transform");
                         }
@@ -121,11 +112,10 @@ namespace StatsMod {
                         float x = Convert.ToSingle(timestamps[i]);
 
                         float y = Convert.ToSingle(PlayerStatsDatabase.Numberise(stat[i]));
-                        
+
                         trueYvalues.Add(y);
                         if (y.ToString() == "Infinity") { y = -1; }
-                        if (currentPlotIsLog && y > -c)
-                        {
+                        if (currentPlotIsLog && y > -c) {
                             y = (float)Math.Log(1 + y / c, logBase);
                         }
 
@@ -154,16 +144,14 @@ namespace StatsMod {
             UpdateGraph(); //
         }
 
-        public static float median(float[] data)
-        {
+        public static float median(float[] data) {
             if (data == null || data.Length == 0) { throw new ArgumentException("I'm coming for you"); }
 
             var sorted = (float[])data.Clone();
             Array.Sort(sorted);
 
             int n = sorted.Length;
-            if (n % 2 == 1) { return sorted[n / 2]; }
-            else { return 0.5f * (sorted[n / 2 - 1] + sorted[n / 2]); }
+            if (n % 2 == 1) { return sorted[n / 2]; } else { return 0.5f * (sorted[n / 2 - 1] + sorted[n / 2]); }
         }
 
         private void ResetGraph() {
@@ -287,7 +275,7 @@ namespace StatsMod {
             set {
                 if (IsWithinBounds(zoom, absoluteZoomPoint, value, moveOffset)) {
                     _zoomPoint = value;
-                };
+                }
             }
         }
 
@@ -299,7 +287,7 @@ namespace StatsMod {
             set {
                 if (IsWithinBounds(zoom, value, zoomPoint, moveOffset)) {
                     _absoluteZoomPoint = value;
-                };
+                }
             }
         }
 
@@ -326,7 +314,7 @@ namespace StatsMod {
             set {
                 if (IsWithinBounds(zoom, absoluteZoomPoint, zoomPoint, value)) {
                     _targetMoveOffset = value;
-                };
+                }
             }
         }
 
@@ -1116,8 +1104,7 @@ namespace StatsMod {
                     yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.Round(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
                     if (currentPlotIsLog) // alternative y axis labelling for log transform
                     {
-                        if (int.Parse(yAxisTexts[i - 1].text) > -c)
-                        {
+                        if (int.Parse(yAxisTexts[i - 1].text) > -c) {
                             yAxisTexts[i - 1].text = $"{(int)(c * ((Math.Pow(logBase, float.Parse(yAxisTexts[i - 1].text))) - 1))}";
                         }
                     }

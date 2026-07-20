@@ -49,7 +49,7 @@ namespace StatsMod {
             set { lineColor = value; GH.UpdateGraphInternal(GraphHandler.UpdateMethod.UpdateContent); }
         }
         [Space]
-        public Sprite PointSprite = Assets.mainAssetBundle.LoadAsset<Sprite>("cross.png");
+        public Sprite PointSprite = Assets.assetBundle.LoadAsset<Sprite>("cross.png");
         [SerializeField] private float pointRadius = 5f;
         public float PointRadius {
             get { return pointRadius; }
@@ -128,7 +128,7 @@ namespace StatsMod {
         [Header("Grid Settings")]
         [Space]
 
-        public TMP_FontAsset GridTextFont = Assets.mainAssetBundle.LoadAsset<TMP_FontAsset>("LiberationSans SDF.asset");
+        public TMP_FontAsset GridTextFont = Assets.assetBundle.LoadAsset<TMP_FontAsset>("LiberationSans SDF.asset");
         [SerializeField] private Vector2 gridSpacing = new Vector2(1, 1);
         public Vector2 GridSpacing {
             get { return gridSpacing; }

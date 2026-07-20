@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using RoR2;
+using System.Collections.Generic;
 using System.Linq;
-using RoR2;
 
 namespace StatsMod.CustomStats {
-    internal class Allies : Stat {
+    internal class Allies : BaseCustomStat {
         private static Dictionary<PlayerCharacterMasterController, uint> alliesDict = [];  // How many times each player has used a shrine of order
-        new public static void Init() {
+
+        public override void Init() {
+            base.Init();
             SceneExitController.onBeginExit += AllyCountTrackLeaveStage;
             Run.onServerGameOver += AllyCountTrackRunOver;
-
-            Tracker.statsTable.Add("allies", alliesDict);
         }
 
         private static void AllyCountTrackRunOver(Run run, GameEndingDef gameEndingDef) {
@@ -35,6 +35,16 @@ namespace StatsMod.CustomStats {
                     droneCount
                     );
                 if (alliesDict.ContainsKey(player)) { alliesDict[player] = (uint)sum; } else { alliesDict.Add(player, (uint)sum); }
+            }
+        }
+
+        public override void ConfigureStatsTable() {
+            CustomStatTracker.statsTable.Add("allies", alliesDict);
+        }
+
+        public override void Deserialize(Dictionary<string, object> restored) {
+            if (restored.ReportContainsKey("allies")) {
+                alliesDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["allies"];
             }
         }
     }

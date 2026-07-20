@@ -1,43 +1,40 @@
 ﻿using RoR2;
-using System.Collections.Generic;
 using System;
-using System.Linq;
-using MonoMod.Cil;
-using Mono.Cecil.Cil;
-using UnityEngine.Networking;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-namespace StatsMod.CustomStats
-{
-    internal class TimeLowHealth : Stat
-    {
+namespace StatsMod.CustomStats {
+    internal class TimeLowHealth : BaseCustomStat {
         private static Dictionary<PlayerCharacterMasterController, float> timeLowHealthDict = [];  // How long each player has been below 25% health
 
-        new public static void Init()
-        {
+        public override void Init() {
+            base.Init();
             On.RoR2.Run.OnFixedUpdate += LowHealthTrack;
-
-            Tracker.statsTable.Add("timeLowHealth", timeLowHealthDict);
         }
 
-        private static void LowHealthTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self)
-        {
+        private static void LowHealthTrack(On.RoR2.Run.orig_OnFixedUpdate orig, Run self) {
             if (NetworkServer.active && PlayerCharacterMasterController.instances.Count > 0)  // These checks may not be necessary but I am too lazy to confirm, it works at least
             {
-                foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances)
-                {
-                    try
-                    {
-                        if (player.master.GetBody().healthComponent.isHealthLow)
-                        {
-                            try { timeLowHealthDict[player] += Time.fixedDeltaTime; }
-                            catch (KeyNotFoundException) { timeLowHealthDict.Add(player, Time.fixedDeltaTime); }
+                foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) {
+                    try {
+                        if (player.master.GetBody().healthComponent.isHealthLow) {
+                            try { timeLowHealthDict[player] += Time.fixedDeltaTime; } catch (KeyNotFoundException) { timeLowHealthDict.Add(player, Time.fixedDeltaTime); }
                         }
-                    }
-                    catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
+                    } catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
                 }
             }
             orig(self);
+        }
+
+        public override void ConfigureStatsTable() {
+            CustomStatTracker.statsTable.Add("timeLowHealth", timeLowHealthDict);
+        }
+
+        public override void Deserialize(Dictionary<string, object> restored) {
+            if (restored.ReportContainsKey("timeLowHealth")) {
+                timeLowHealthDict = (Dictionary<PlayerCharacterMasterController, float>)restored["timeLowHealth"];
+            }
         }
     }
 }

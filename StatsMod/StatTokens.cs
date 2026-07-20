@@ -5,11 +5,6 @@
 
         public static void Init() {
             AddStatsModTokens();
-
-            ////uncomment this to spit out a lanuage file with all the above tokens that people can translate
-            ////make sure you set Language.usingLanguageFolder and printingEnabled to true
-            //Language.PrintOutput("StatsMod.txt");
-            ////refer to guide on how to build and distribute your mod with the proper folders
         }
 
         public static void AddStatsModTokens() {

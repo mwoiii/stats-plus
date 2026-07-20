@@ -13,7 +13,7 @@ namespace StatsMod {
 
         public static GameObject gameEndPrefab => Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/GameEndReportPanel.prefab").WaitForCompletion(); // prefab of the results screen, for grabbing copies of objects
 
-        public static GameObject panelPrefab => Assets.mainAssetBundle.LoadAsset<GameObject>("StatsPanel.prefab"); // prefab of the stats panel
+        public static GameObject panelPrefab => Assets.assetBundle.LoadAsset<GameObject>("StatsPanel.prefab"); // prefab of the stats panel
 
         public static RoR2.UI.GameEndReportPanelController gameEndReportPanelController; // current report panel controller
 

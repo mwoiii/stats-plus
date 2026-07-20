@@ -27,38 +27,9 @@ namespace StatsMod {
             Run.onServerGameOver += GameOverReport;
             NetworkUser.onNetworkUserLost += DeleteUserRecord;
 
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.ProperSave")) { SetupProperSave(); }
-        }
-
-        private static void SetupProperSave()
-        {
-            ProperSave.SaveFile.OnGatherSaveData += (dict) =>
-            {
-                if (statsDatabase != null)
-                {
-                    var moment = new Dictionary<string, Dictionary<string, List<object>>>();
-                    foreach (var entry in statsDatabase)
-                    {
-                        moment[entry.GetPlayerName()] = entry.Database;
-                    }
-                    dict["StatsPlus_Save"] = moment;
-                }
-            };
-
-            ProperSave.Loading.OnLoadingEnded += (savefile) =>
-            {
-                // InnerResetDatabase(); // Evil and sinister line that causes two event subscriptions to occur, making the same player count twice towards bodiesCounter
-                if (savefile.ModdedData.ContainsKey("StatsPlus_Save"))
-                {
-                    var restored = savefile.GetModdedData<Dictionary<string, Dictionary<string, List<object>>>>("StatsPlus_Save");
-                    foreach (var entry in statsDatabase)
-                    {
-                        if (restored.TryGetValue(entry.GetPlayerName(), out var a)) { entry.RestoreFrom(a); }
-                    }
-
-                    Log.Info("Loaded database from ProperSave");
-                }
-            };
+            if (ProperSaveCompat.enabled) {
+                ProperSaveCompat.Init();
+            }
         }
 
         private static void DeleteUserRecord(NetworkUser networkUser) // Originally deleted disconnected player records, but now marks them as disconnected
@@ -67,8 +38,7 @@ namespace StatsMod {
 
             // statsDatabase.RemoveAll((x) => x.BelongsTo(networkUser.masterController));
 
-            foreach (PlayerStatsDatabase a in statsDatabase)
-            {
+            foreach (PlayerStatsDatabase a in statsDatabase) {
                 if (a.BelongsTo(networkUser.masterController)) { a.goner = true; Log.Info($"{a.GetPlayerName()} marked as disconnected"); }
             }
 
@@ -86,7 +56,7 @@ namespace StatsMod {
 
         private static void InnerResetDatabase() // For use with ProperSave
         {
-            Tracker.ResetData();
+            CustomStatTracker.ResetData();
             SetupDatabase();
 
             ResetBodyCounter();

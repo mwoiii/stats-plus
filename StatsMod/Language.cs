@@ -1,7 +1,7 @@
-﻿using System;
+﻿using R2API;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using R2API;
 
 namespace StatsMod {
     internal static class Language {

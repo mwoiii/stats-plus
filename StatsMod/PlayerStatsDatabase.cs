@@ -1,10 +1,10 @@
-﻿using System;
+﻿using RoR2;
+using RoR2.Stats;
+using StatsMod.CustomStats;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RoR2;
-using RoR2.Stats;
-using StatsMod.CustomStats;
 
 namespace StatsMod {
     public class PlayerStatsDatabase {
@@ -21,7 +21,7 @@ namespace StatsMod {
         public static readonly string[] charBodyStats = ["maxHealth", "regen", "maxShield", "moveSpeed", "maxJumpCount", "damage", "attackSpeed", "crit", "armor"];
         // "totalStagesCompleted", "maxGoldCollected", "highestLevel", "totalGamesPlayed", "highestItemsCollected", "highestStagesCompleted", "highestPurchases", "highestGoldPurchases", "highestBloodPurchases", "highestLunarPurchases", "highestTier1Purchases", "highestTier2Purchases", "highestTier3Purchases", "suicideHermitCrabsAchievementProgress", "firstTeleporterCompleted"
         public static readonly string[] statSheetStats = ["totalTimeAlive", "totalKills", "totalMinionKills", "totalDeaths", "totalDamageDealt", "totalMinionDamageDealt", "totalDamageTaken", "totalHealthHealed", "highestDamageDealt", "goldCollected", "totalDistanceTraveled", "totalItemsCollected", "totalPurchases", "totalGoldPurchases", "totalBloodPurchases", "totalLunarPurchases", "totalTier1Purchases", "totalTier2Purchases", "totalTier3Purchases", "totalDronesPurchased", "totalTurretsPurchased", "totalGreenSoupsPurchased", "totalRedSoupsPurchased"];
-        public static readonly string[] customStats = ["shrinePurchases", "shrineWins", "orderHits", "timeStill", "timeStillUnsafe", "timeLowHealth", "fallDamage", "coinsSpent", "avenges", "timesLastStanding", "itemLead", "nonScrapPrinted", "likelyDonations", "allies"]; // "chainableProcs" (disabled)
+        public static readonly string[] customStats = CustomStatTracker.statsTable.Keys.OfType<string>().ToArray(); // assuming it will never change after initialisation
 
         public static IEnumerable<string> allStats = charBodyStats.Union(statSheetStats).Union(customStats);
 
@@ -43,8 +43,7 @@ namespace StatsMod {
             float timestamp = Run.instance.GetRunStopwatch();
             Database["timestamps"].Add(timestamp);
 
-            if (goner)
-            {
+            if (goner) {
                 foreach (string a in allStats) { Database[a].Add(Database[a].Last()); }
                 return timestamp;
             }
@@ -78,7 +77,7 @@ namespace StatsMod {
             // Getting custom stats
             foreach (string i in customStats) {
                 try {
-                    var stat = Tracker.GetStat(player, i);
+                    var stat = CustomStatTracker.GetStat(player, i);
                     Database[i].Add(stat);
                 } catch (Exception e) {
                     Database[i].Add(Database[i].Last());
@@ -89,8 +88,7 @@ namespace StatsMod {
             return timestamp;
         }
 
-        public void RestoreFrom(Dictionary<string, List<object>> restoredDatabase)
-        {
+        public void RestoreFrom(Dictionary<string, List<object>> restoredDatabase) {
             Database.Clear();
             foreach (var a in restoredDatabase) { Database[a.Key] = a.Value; }
         }

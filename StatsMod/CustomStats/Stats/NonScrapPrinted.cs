@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Mono.Cecil.Cil;
+﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace StatsMod.CustomStats {
-    internal class NonScrapPrinted : Stat {
+    internal class NonScrapPrinted : BaseCustomStat {
         private static Dictionary<PlayerCharacterMasterController, uint> nonScrapPrintedDict = [];  // The amount of items used in printers and soups that were not scrap
-        new public static void Init() {
-            IL.RoR2.PurchaseInteraction.OnInteractionBegin += NonScrapTrack;
 
-            Tracker.statsTable.Add("nonScrapPrinted", nonScrapPrintedDict);
+        public override void Init() {
+            base.Init();
+            IL.RoR2.PurchaseInteraction.OnInteractionBegin += NonScrapTrack;
         }
 
         private static void NonScrapTrack(ILContext il) {
@@ -51,6 +51,16 @@ namespace StatsMod.CustomStats {
                 PurchaseInteraction.onItemSpentOnPurchase?.Invoke(this, activator);
             }
             */
+        }
+
+        public override void ConfigureStatsTable() {
+            CustomStatTracker.statsTable.Add("nonScrapPrinted", nonScrapPrintedDict);
+        }
+
+        public override void Deserialize(Dictionary<string, object> restored) {
+            if (restored.ReportContainsKey("nonScrapPrinted")) {
+                nonScrapPrintedDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["nonScrapPrinted"];
+            }
         }
     }
 }
