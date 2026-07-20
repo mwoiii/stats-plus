@@ -19,25 +19,19 @@
     <PackageReference Include="MMHOOK.RoR2" Version="2025.11.19" />
     <PackageReference Include="MonoMod" Version="22.7.31.1" />
     <PackageReference Include="R2API" Version="5.0.5" />
-    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.4.0-r.0" />
+    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.4.1-r.0" />
     <PackageReference Include="UnityEngine.Modules" Version="2021.3.33">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Facepunch.Steamworks">
-      <HintPath>libs\Facepunch.Steamworks.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="ProperSave">
       <HintPath>libs\ProperSave.dll</HintPath>
+	  <Private>false</Private>
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>libs\Unity.Mathematics.dll</HintPath>
-    </Reference>
-    <Reference Include="Zio">
-      <HintPath>libs\Zio.dll</HintPath>
-      <Private>false</Private>
+	  <Private>false</Private>
     </Reference>
   </ItemGroup>
 </Project>
