@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using RoR2;
+﻿using RoR2;
 using StatsMod.CustomStats;
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using System.Linq;
 
 namespace StatsMod {
     public static class RecordHandler {
@@ -48,7 +47,7 @@ namespace StatsMod {
 
             ProperSave.Loading.OnLoadingEnded += (savefile) =>
             {
-                InnerResetDatabase();
+                // InnerResetDatabase(); // Evil and sinister line that causes two event subscriptions to occur, making the same player count twice towards bodiesCounter
                 if (savefile.ModdedData.ContainsKey("StatsPlus_Save"))
                 {
                     var restored = savefile.GetModdedData<Dictionary<string, Dictionary<string, List<object>>>>("StatsPlus_Save");
