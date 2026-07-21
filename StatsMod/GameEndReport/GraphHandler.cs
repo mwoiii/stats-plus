@@ -1104,8 +1104,8 @@ namespace StatsMod {
                     yAxisTexts[i - 1].text = Mathf.Floor(1f / spacing.y) > 0 ? Mathf.Round(GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString() : (GridStartPoint.y / contentScale.y + (i + eventualOverlay.y) / spacing.y).ToString("R");
                     if (currentPlotIsLog) // alternative y axis labelling for log transform
                     {
-                        if (int.TryParse(yAxisTexts[i - 1].text, out int x) && x > -c) {
-                            yAxisTexts[i - 1].text = $"{(int)(c * ((Math.Pow(logBase, float.Parse(yAxisTexts[i - 1].text))) - 1))}";
+                        if (long.TryParse(yAxisTexts[i - 1].text, out long x) && x > -c) {
+                            yAxisTexts[i - 1].text = $"{(long)(c * ((Math.Pow(logBase, double.Parse(yAxisTexts[i - 1].text))) - 1))}";
                         }
                         else
                         {
