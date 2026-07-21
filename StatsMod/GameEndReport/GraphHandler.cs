@@ -1109,7 +1109,7 @@ namespace StatsMod {
                         }
                         else
                         {
-                            yAxisTexts[i - 1].text = $"{logBase}<sup>{yAxisTexts[i - 1].text}</sup>"; // use alternate labelling in case of TryParse failure
+                            yAxisTexts[i - 1].text = $"";
                         }
                     }
                     // if (currentPlotIsLog) { yAxisTexts[i - 1].text = $"{logBase}<sup>{yAxisTexts[i - 1].text}</sup>"; } // power notation y axis labeeling for log transform
