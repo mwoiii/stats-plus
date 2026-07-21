@@ -1,10 +1,11 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Linq;
+using RoR2;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
 namespace StatsMod.CustomStats {
     internal class TimesLastStanding : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, uint> timesLastStandingDict = [];  // How many times a player has been the last man standing before the end of the tp event]
+        private static Dictionary<string, uint> timesLastStandingDict = [];  // How many times a player has been the last man standing before the end of the tp event]
 
         public override void Init() {
             base.Init();
@@ -22,7 +23,8 @@ namespace StatsMod.CustomStats {
                 }
             }
             if (alivePlayers == 1) {
-                if (timesLastStandingDict.ContainsKey(alivePlayer)) { timesLastStandingDict[alivePlayer]++; } else { timesLastStandingDict.Add(alivePlayer, 1); }
+                string playerName = RecordHandler.masterControllerToName[alivePlayer];
+                if (timesLastStandingDict.ContainsKey(playerName)) { timesLastStandingDict[playerName]++; } else { timesLastStandingDict.Add(playerName, 1); }
             }
             orig(self, damageReport, victimNetworkUser);
         }
@@ -31,9 +33,9 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("timesLastStanding", timesLastStandingDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("timesLastStanding")) {
-                timesLastStandingDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["timesLastStanding"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("timesLastStanding")) {
+                timesLastStandingDict = restored["timesLastStanding"].ToObject<Dictionary<string, uint>>();
             }
         }
     }

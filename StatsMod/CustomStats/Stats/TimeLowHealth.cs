@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Linq;
+using RoR2;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +7,7 @@ using UnityEngine.Networking;
 
 namespace StatsMod.CustomStats {
     internal class TimeLowHealth : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, float> timeLowHealthDict = [];  // How long each player has been below 25% health
+        private static Dictionary<string, float> timeLowHealthDict = [];  // How long each player has been below 25% health
 
         public override void Init() {
             base.Init();
@@ -19,7 +20,8 @@ namespace StatsMod.CustomStats {
                 foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) {
                     try {
                         if (player.master.GetBody().healthComponent.isHealthLow) {
-                            try { timeLowHealthDict[player] += Time.fixedDeltaTime; } catch (KeyNotFoundException) { timeLowHealthDict.Add(player, Time.fixedDeltaTime); }
+                            string playerName = RecordHandler.masterControllerToName[player];
+                            try { timeLowHealthDict[playerName] += Time.fixedDeltaTime; } catch (KeyNotFoundException) { timeLowHealthDict.Add(playerName, Time.fixedDeltaTime); }
                         }
                     } catch (NullReferenceException) { continue; }  // Player may be dead, or not properly spawned yet
                 }
@@ -31,9 +33,9 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("timeLowHealth", timeLowHealthDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("timeLowHealth")) {
-                timeLowHealthDict = (Dictionary<PlayerCharacterMasterController, float>)restored["timeLowHealth"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("timeLowHealth")) {
+                timeLowHealthDict = restored["timeLowHealth"].ToObject<Dictionary<string, float>>();
             }
         }
     }

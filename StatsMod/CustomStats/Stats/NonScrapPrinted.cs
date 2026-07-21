@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using Newtonsoft.Json.Linq;
 using RoR2;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Linq;
 
 namespace StatsMod.CustomStats {
     internal class NonScrapPrinted : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, uint> nonScrapPrintedDict = [];  // The amount of items used in printers and soups that were not scrap
+        private static Dictionary<string, uint> nonScrapPrintedDict = [];  // The amount of items used in printers and soups that were not scrap
 
         public override void Init() {
             base.Init();
@@ -37,7 +38,8 @@ namespace StatsMod.CustomStats {
                 };
                     if (!itemBlacklist.Contains(itemDef)) {
                         var player = interactorBody.master.playerCharacterMasterController;
-                        if (nonScrapPrintedDict.ContainsKey(player)) { nonScrapPrintedDict[player]++; } else { nonScrapPrintedDict.Add(player, 1); }
+                        string playerName = RecordHandler.masterControllerToName[player];
+                        if (nonScrapPrintedDict.ContainsKey(playerName)) { nonScrapPrintedDict[playerName]++; } else { nonScrapPrintedDict.Add(playerName, 1); }
                     }
                 });
             } else {
@@ -57,9 +59,9 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("nonScrapPrinted", nonScrapPrintedDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("nonScrapPrinted")) {
-                nonScrapPrintedDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["nonScrapPrinted"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("nonScrapPrinted")) {
+                nonScrapPrintedDict = restored["nonScrapPrinted"].ToObject<Dictionary<string, uint>>();
             }
         }
     }

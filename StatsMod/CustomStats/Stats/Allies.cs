@@ -1,10 +1,11 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Linq;
+using RoR2;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace StatsMod.CustomStats {
     internal class Allies : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, uint> alliesDict = [];  // How many times each player has used a shrine of order
+        private static Dictionary<string, uint> alliesDict = [];  // How many times each player has used a shrine of order
 
         public override void Init() {
             base.Init();
@@ -34,7 +35,13 @@ namespace StatsMod.CustomStats {
                     (inventory.GetItemCountPermanent(RoR2Content.Items.RoboBallBuddy) > 0 ? 2 : 0) +
                     droneCount
                     );
-                if (alliesDict.ContainsKey(player)) { alliesDict[player] = (uint)sum; } else { alliesDict.Add(player, (uint)sum); }
+
+                string playerName = RecordHandler.masterControllerToName[player];
+                if (alliesDict.ContainsKey(playerName)) {
+                    alliesDict[playerName] = (uint)sum;
+                } else {
+                    alliesDict.Add(playerName, (uint)sum);
+                }
             }
         }
 
@@ -42,9 +49,9 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("allies", alliesDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("allies")) {
-                alliesDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["allies"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("allies")) {
+                alliesDict = restored["allies"].ToObject<Dictionary<string, uint>>();
             }
         }
     }

@@ -1,10 +1,11 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Linq;
+using RoR2;
 using System;
 using System.Collections.Generic;
 
 namespace StatsMod.CustomStats {
     internal class FallDamage : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, float> fallDamageDict = [];  // How much fall damage each player has taken
+        private static Dictionary<string, float> fallDamageDict = [];  // How much fall damage each player has taken
 
         public override void Init() {
             base.Init();
@@ -17,7 +18,8 @@ namespace StatsMod.CustomStats {
 
             if (isPlayerFall) {
                 PlayerCharacterMasterController player = damageReport.victimMaster.GetComponent<PlayerCharacterMasterController>();
-                if (fallDamageDict.ContainsKey(player)) { fallDamageDict[player] += damageReport.damageDealt; } else { fallDamageDict.Add(player, damageReport.damageDealt); }
+                string playerName = RecordHandler.masterControllerToName[player];
+                if (fallDamageDict.ContainsKey(playerName)) { fallDamageDict[playerName] += damageReport.damageDealt; } else { fallDamageDict.Add(playerName, damageReport.damageDealt); }
             }
             orig(self, damageReport);
         }
@@ -26,9 +28,9 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("fallDamage", fallDamageDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("fallDamage")) {
-                fallDamageDict = (Dictionary<PlayerCharacterMasterController, float>)restored["fallDamage"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("fallDamage")) {
+                fallDamageDict = restored["fallDamage"].ToObject<Dictionary<string, float>>();
             }
         }
     }

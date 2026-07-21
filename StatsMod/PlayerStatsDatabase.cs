@@ -34,6 +34,7 @@ namespace StatsMod {
                 Log.Warning($"No name found for player with index {playerIndex}, will use index to reference instead. Can by caused by singleplayer server testing.");
                 playerName = $"Player {playerIndex}";
             }
+            RecordHandler.masterControllerToName[instance] = playerName;
 
             Database.Add("timestamps", []);
             foreach (string statName in allStats) { Database.Add(statName, []); }

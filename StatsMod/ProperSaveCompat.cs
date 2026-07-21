@@ -1,4 +1,6 @@
-﻿using StatsMod.CustomStats;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using StatsMod.CustomStats;
 using System;
 using System.Collections.Generic;
 
@@ -27,7 +29,8 @@ namespace StatsMod {
                 foreach (var entry in RecordHandler.statsDatabase) {
                     databases[entry.GetPlayerName()] = entry.Database;
                 }
-                var properSaveObj = new StatsPlusProperSaveObj(databases, new Dictionary<string, object>(CustomStatTracker.statsTable));
+
+                var properSaveObj = new StatsPlusProperSaveObj(databases, JsonConvert.SerializeObject(CustomStatTracker.statsTable));
                 dict["StatsPlus_Save"] = properSaveObj;
             }
         }
@@ -42,7 +45,7 @@ namespace StatsMod {
                 }
                 CustomStatTracker.statsTable.Clear();
                 foreach (var customStat in CustomStatTracker.registeredStats) {
-                    customStat.Deserialize(restored.customStatsTable);
+                    customStat.TryDeserialize(JsonConvert.DeserializeObject<Dictionary<string, JToken>>(restored.customStatsTable));
                     customStat.ConfigureStatsTable();
                 }
                 Log.Info("Loaded database from ProperSave");
@@ -51,9 +54,9 @@ namespace StatsMod {
 
         private class StatsPlusProperSaveObj {
             public Dictionary<string, Dictionary<string, List<object>>> databases;
-            public Dictionary<string, object> customStatsTable;
+            public string customStatsTable;
 
-            public StatsPlusProperSaveObj(Dictionary<string, Dictionary<string, List<object>>> databases, Dictionary<string, object> customStatsTable) {
+            public StatsPlusProperSaveObj(Dictionary<string, Dictionary<string, List<object>>> databases, string customStatsTable) {
                 this.databases = databases;
                 this.customStatsTable = customStatsTable;
             }

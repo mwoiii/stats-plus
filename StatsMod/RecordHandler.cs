@@ -17,6 +17,8 @@ namespace StatsMod {
 
         public static List<IndependentEntry> independentDatabase;
 
+        public static Dictionary<PlayerCharacterMasterController, string> masterControllerToName = new();
+
         private static int bodiesCounter = 0;
 
         private static bool awaitingStageRecord = true;
@@ -116,6 +118,7 @@ namespace StatsMod {
             if (!NetworkServer.active) { return; }
 
             _statsDatabase = [];
+            masterControllerToName.Clear();
             foreach (PlayerCharacterMasterController player in PlayerCharacterMasterController.instances) {
                 statsDatabase.Add(new PlayerStatsDatabase(player));
             }

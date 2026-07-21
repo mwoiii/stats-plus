@@ -8,8 +8,8 @@ namespace StatsMod.CustomStats {
             return TeleporterInteraction.instance?.isCharged ?? ArenaMissionController.instance?.clearedEffect.activeSelf ?? voidLocusSafe;
         }
 
-        public static bool ReportContainsKey<T1, T2>(this Dictionary<T1, T2> dict, T1 key) {
-            if (dict.ContainsKey(key)) {
+        public static bool CanDeserialize<T1, T2>(this Dictionary<T1, T2> dict, T1 key) {
+            if (dict.ContainsKey(key) && dict[key] != null) {
                 return true;
             } else {
                 Log.Error($"Error deserializing custom stat - could not find key '{key}'");

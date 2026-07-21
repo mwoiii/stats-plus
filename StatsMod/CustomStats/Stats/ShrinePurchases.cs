@@ -1,10 +1,11 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Linq;
+using RoR2;
 using System.Collections.Generic;
 
 namespace StatsMod.CustomStats {
     internal class ShrinePurchases : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, uint> shrinePurchasesDict = [];  // How many times each player has used a shrine of chance
-        private static Dictionary<PlayerCharacterMasterController, uint> shrineWinsDict = [];  // How many times each player has won a shrine of chance
+        private static Dictionary<string, uint> shrinePurchasesDict = [];  // How many times each player has used a shrine of chance
+        private static Dictionary<string, uint> shrineWinsDict = [];  // How many times each player has won a shrine of chance
 
         public override void Init() {
             base.Init();
@@ -13,12 +14,13 @@ namespace StatsMod.CustomStats {
 
         private static void ShrineTrack(bool failed, Interactor activator) {
             var player = activator.GetComponent<CharacterBody>().master.playerCharacterMasterController;
-            if (shrinePurchasesDict.ContainsKey(player)) {
-                shrinePurchasesDict[player]++;
-                if (!failed) { shrineWinsDict[player]++; }
+            string playerName = RecordHandler.masterControllerToName[player];
+            if (shrinePurchasesDict.ContainsKey(playerName)) {
+                shrinePurchasesDict[playerName]++;
+                if (!failed) { shrineWinsDict[playerName]++; }
             } else {
-                shrinePurchasesDict.Add(player, 1);
-                if (!failed) { shrineWinsDict.Add(player, 1); } else { shrineWinsDict.Add(player, 0); }
+                shrinePurchasesDict.Add(playerName, 1);
+                if (!failed) { shrineWinsDict.Add(playerName, 1); } else { shrineWinsDict.Add(playerName, 0); }
             }
         }
 
@@ -27,12 +29,12 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("shrineWins", shrineWinsDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("shrinePurchases")) {
-                shrinePurchasesDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["shrinePurchases"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("shrinePurchases")) {
+                shrinePurchasesDict = restored["shrinePurchases"].ToObject<Dictionary<string, uint>>();
             }
-            if (restored.ReportContainsKey("shrineWins")) {
-                shrineWinsDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["shrineWins"];
+            if (restored.CanDeserialize("shrineWins")) {
+                shrineWinsDict = restored["shrineWins"].ToObject<Dictionary<string, uint>>();
             }
         }
     }

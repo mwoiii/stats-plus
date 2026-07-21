@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace StatsMod.CustomStats {
     public abstract class BaseCustomStat {
@@ -9,6 +10,14 @@ namespace StatsMod.CustomStats {
 
         public abstract void ConfigureStatsTable();
 
-        public abstract void Deserialize(Dictionary<string, object> restored);
+        public void TryDeserialize(Dictionary<string, JToken> restored) {
+            try {
+                Deserialize(restored);
+            } catch (System.Exception e) {
+                Log.Error($"Failed to deserialize custom stat!\n{e}");
+            }
+        }
+
+        public abstract void Deserialize(Dictionary<string, JToken> restored);
     }
 }

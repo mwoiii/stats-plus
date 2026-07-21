@@ -1,10 +1,11 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Linq;
+using RoR2;
 using System;
 using System.Collections.Generic;
 
 namespace StatsMod.CustomStats {
     internal class Avenges : BaseCustomStat {
-        private static Dictionary<PlayerCharacterMasterController, uint> avengesDict = [];  // How many times a player has avenged another (killing an enemy that hurt another player)
+        private static Dictionary<string, uint> avengesDict = [];  // How many times a player has avenged another (killing an enemy that hurt another player)
         private static Dictionary<CharacterMaster, List<PlayerCharacterMasterController>> avengeHitList = [];  // Dictionary for recording which enemies are avenge targets, and which players they've hit
 
         public override void Init() {
@@ -38,7 +39,8 @@ namespace StatsMod.CustomStats {
             if (avengeHitList.ContainsKey(victimMaster) && (damageReport.attackerBody?.isPlayerControlled ?? false)) {
                 PlayerCharacterMasterController attackerController = damageReport.attackerMaster.GetComponent<PlayerCharacterMasterController>();
                 if (avengeHitList[victimMaster].Count > 1 || avengeHitList[victimMaster][0] != attackerController) {
-                    if (avengesDict.ContainsKey(attackerController)) { avengesDict[attackerController]++; } else { avengesDict.Add(attackerController, 1); }
+                    string playerName = RecordHandler.masterControllerToName[attackerController];
+                    if (avengesDict.ContainsKey(playerName)) { avengesDict[playerName]++; } else { avengesDict.Add(playerName, 1); }
                 }
                 avengeHitList.Remove(victimMaster);
             }
@@ -53,9 +55,9 @@ namespace StatsMod.CustomStats {
             CustomStatTracker.statsTable.Add("avenges", avengesDict);
         }
 
-        public override void Deserialize(Dictionary<string, object> restored) {
-            if (restored.ReportContainsKey("avenges")) {
-                avengesDict = (Dictionary<PlayerCharacterMasterController, uint>)restored["avenges"];
+        public override void Deserialize(Dictionary<string, JToken> restored) {
+            if (restored.CanDeserialize("avenges")) {
+                avengesDict = restored["avenges"].ToObject<Dictionary<string, uint>>();
             }
         }
     }
