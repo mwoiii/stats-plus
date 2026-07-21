@@ -51,17 +51,12 @@ namespace StatsMod {
         {
             if (!NetworkServer.active) { return; }
 
-            InnerResetDatabase();
-
-            Log.Info("New run, resetting data dicts and database");
-        }
-
-        private static void InnerResetDatabase() // For use with ProperSave
-        {
             CustomStatTracker.ResetData();
             SetupDatabase();
 
             ResetBodyCounter();
+
+            Log.Info("New run, resetting data dicts and database");
         }
 
         private static void CheckTakeRecord(CharacterBody self) // For a record to be taken at the start of each stage it is ensured that the body for each player exists

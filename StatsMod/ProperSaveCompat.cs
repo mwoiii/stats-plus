@@ -36,19 +36,30 @@ namespace StatsMod {
         }
 
         private static void LoadStats(ProperSave.SaveFile saveFile) {
-            if (saveFile.ModdedData.ContainsKey("StatsPlus_Save")) {
-                var restored = saveFile.GetModdedData<StatsPlusProperSaveObj>("StatsPlus_Save");
-                foreach (var entry in RecordHandler.statsDatabase) {
-                    if (restored.databases.TryGetValue(entry.GetPlayerName(), out var a)) {
-                        entry.RestoreFrom(a);
+            try
+            {
+                if (saveFile.ModdedData.ContainsKey("StatsPlus_Save"))
+                {
+                    var restored = saveFile.GetModdedData<StatsPlusProperSaveObj>("StatsPlus_Save");
+                    foreach (var entry in RecordHandler.statsDatabase)
+                    {
+                        if (restored.databases.TryGetValue(entry.GetPlayerName(), out var a))
+                        {
+                            entry.RestoreFrom(a);
+                        }
                     }
+                    CustomStatTracker.statsTable.Clear();
+                    foreach (var customStat in CustomStatTracker.registeredStats)
+                    {
+                        customStat.TryDeserialize(JsonConvert.DeserializeObject<Dictionary<string, JToken>>(restored.customStatsTable));
+                        customStat.ConfigureStatsTable();
+                    }
+                    Log.Info("Loaded database from ProperSave");
                 }
-                CustomStatTracker.statsTable.Clear();
-                foreach (var customStat in CustomStatTracker.registeredStats) {
-                    customStat.TryDeserialize(JsonConvert.DeserializeObject<Dictionary<string, JToken>>(restored.customStatsTable));
-                    customStat.ConfigureStatsTable();
-                }
-                Log.Info("Loaded database from ProperSave");
+            }
+            catch (Exception e) // We believe ProperSave eats errors here without logging anything, this forces a log
+            {
+                Log.Error($"Error during ProperSave load: {e.Message} \n {e.StackTrace}");
             }
         }
 
