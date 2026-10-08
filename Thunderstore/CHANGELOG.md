@@ -1,8 +1,14 @@
+## 2.1.1
+
+* Fixed for DLC4
+
 ## 2.1.0
 
 * ProperSave compatibility
-* Log transform now uses log(1+y/c) where c=median(y). This is a lot better than log(y)
+* Log transform now uses log(1+y/c) where c=median(y). This is a lot better than log(y).
 * Players who disconnected before the end screen now flatline past the point of disconnection instead of being outright removed from graphs
+* Removed likely donations (for the greater good)
+* Fixes and error handling :)
 
 ## 2.0.4
 
@@ -55,4 +61,5 @@
 ## 1.0.0
 
 * Initial release
+* Secret onion ring
 

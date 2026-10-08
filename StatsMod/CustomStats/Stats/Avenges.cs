@@ -10,12 +10,12 @@ namespace StatsMod.CustomStats {
 
         public override void Init() {
             base.Init();
-            GlobalEventManager.onCharacterDeathGlobal += AvengesTrack;
-            On.RoR2.DamageReport.ctor += RecordHitList;
+            GlobalEventManager.onDeathProcServer += AvengesTrack;
+            On.RoR2.DamageReport.ctor_DamageInfo_HealthComponent_float_float += RecordHitList;
             On.RoR2.Run.BeginStage += ClearDicts;
         }
 
-        private static void RecordHitList(On.RoR2.DamageReport.orig_ctor orig, DamageReport self, DamageInfo damageInfo, HealthComponent victim, float damageDealt, float combinedHealthBeforeDamage) {
+        private static void RecordHitList(On.RoR2.DamageReport.orig_ctor_DamageInfo_HealthComponent_float_float orig, DamageReport self, DamageInfo damageInfo, HealthComponent victim, float damageDealt, float combinedHealthBeforeDamage) {
             orig(self, damageInfo, victim, damageDealt, combinedHealthBeforeDamage);
 
             CharacterBody victimBody = victim ? victim.body : null;

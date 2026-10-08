@@ -16,7 +16,7 @@
     </PackageReference>
     <PackageReference Include="R2API.Networking" Version="1.0.2" />
     <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-    <PackageReference Include="MMHOOK.RoR2" Version="2025.11.19" />
+    <PackageReference Include="MMHOOK.RoR2" Version="2025.12.9" />
     <PackageReference Include="MonoMod" Version="22.7.31.1" />
     <PackageReference Include="R2API" Version="5.0.5" />
     <PackageReference Include="RiskOfRain2.GameLibs" Version="1.4.1-r.0" />
